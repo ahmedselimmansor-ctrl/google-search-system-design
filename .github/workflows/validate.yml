@@ -11,11 +11,11 @@ jobs:
     name: Mermaid diagrams parse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli
@@ -53,7 +53,7 @@ jobs:
     name: Internal links resolve
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check relative Markdown links
         shell: bash
@@ -81,7 +81,7 @@ jobs:
     name: EN and AR stay in sync
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Compare diagram IDs and counts across languages
         shell: bash
