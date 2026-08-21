@@ -1,0 +1,42 @@
+flowchart TB
+    subgraph SMALL["🟢 Routine — invisible to users"]
+        S1["Single machine dies<br/>→ replica serves, scheduler reschedules"]
+        S2["Single disk fails<br/>→ checksum catches it, re-replicate"]
+        S3["Process crash<br/>→ restarted in seconds"]
+        S4["One leaf slow<br/>→ hedged request wins"]
+    end
+
+    subgraph MED["🟡 Notable — degraded but serving"]
+        M1["Shard replica set unavailable<br/>→ serve with reduced coverage,<br/>annotate the response"]
+        M2["Rack / power domain loss<br/>→ replicas elsewhere absorb"]
+        M3["Ranking tier overloaded<br/>→ skip L3, serve L2 ordering"]
+        M4["Cache tier restart<br/>→ index tier load spikes;<br/>admission limits protect it"]
+        M5["Freshness pipeline stalled<br/>→ results go stale, still correct"]
+    end
+
+    subgraph LARGE["🟠 Serious — user-visible"]
+        L1["Whole cell fails<br/>→ drain, redistribute in-region"]
+        L2["Whole region fails<br/>→ anycast reroutes;<br/>latency rises for those users"]
+        L3["Bad index published<br/>→ rollback to previous version"]
+        L4["Bad ranking model<br/>→ automatic rollback on metric alarm"]
+    end
+
+    subgraph CRIT["🔴 Critical — needs pre-planned response"]
+        C1["Coordination service quorum loss<br/>→ control plane freezes;<br/>serving continues on last-known state"]
+        C2["Global config push corrupts all cells<br/>→ THE dangerous one:<br/>a global change has no blast radius limit"]
+        C3["Correlated overload:<br/>every cell hits capacity at once"]
+    end
+
+    S1 & S2 & S3 & S4 --> AUTO["Handled automatically<br/>no human involved"]
+    M1 & M2 & M3 & M4 & M5 --> DEGRADE["Graceful degradation<br/>alert raised, no page"]
+    L1 & L2 & L3 & L4 --> PAGE["On-call paged<br/>runbook exists"]
+    C1 & C2 & C3 --> INCIDENT["Incident response<br/>pre-planned, drilled"]
+
+    classDef ok fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef warn fill:#fef08a,stroke:#a16207,color:#1c1917
+    classDef bad fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef crit fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class S1,S2,S3,S4,AUTO ok
+    class M1,M2,M3,M4,M5,DEGRADE warn
+    class L1,L2,L3,L4,PAGE bad
+    class C1,C2,C3,INCIDENT crit

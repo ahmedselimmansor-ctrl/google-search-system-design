@@ -1,0 +1,16 @@
+quadrantChart
+    title Read volume vs consistency requirement
+    x-axis "Low read volume" --> "Extreme read volume"
+    y-axis "Eventual consistency OK" --> "Strong consistency required"
+    quadrant-1 "Hard: global databases"
+    quadrant-2 "Coordination systems"
+    quadrant-3 "Simple services"
+    quadrant-4 "Read-optimized at scale"
+    "Web search serving": [0.93, 0.18]
+    "Index shard assignment": [0.15, 0.90]
+    "Payment ledger": [0.30, 0.96]
+    "CDN edge cache": [0.88, 0.08]
+    "Social feed": [0.75, 0.25]
+    "Crawl frontier": [0.55, 0.30]
+    "Legal removals": [0.08, 0.94]
+    "Analytics warehouse": [0.20, 0.35]

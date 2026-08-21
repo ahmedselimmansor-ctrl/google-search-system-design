@@ -1,0 +1,40 @@
+flowchart TB
+    Q["User query + context"] --> USE1["Immediate use:<br/>serve this request<br/>(spelling, ranking, personalization)"]
+
+    USE1 --> LOG{"Log it?"}
+    LOG -->|"Minimal necessary"| L1["Logged record"]
+    LOG -->|"Not needed"| DROP["🗑️ Never stored"]
+
+    L1 --> P1["① Immediate: strip or truncate<br/>direct identifiers"]
+    P1 --> P2["② Short window: full record for<br/>abuse detection and debugging<br/>— strictly access-controlled"]
+    P2 --> P3["③ Anonymization: IP truncated,<br/>cookies unlinked, session broken"]
+    P3 --> P4["④ Aggregation: only counts and<br/>distributions retained"]
+    P4 --> P5["⑤ Deletion of raw records<br/>on a fixed schedule"]
+
+    P4 --> USES["Legitimate aggregate uses"]
+    USES --> U1["Ranking model training<br/>on de-identified data"]
+    USES --> U2["Spell correction from<br/>aggregate reformulations"]
+    USES --> U3["Trend and demand detection<br/>for crawl prioritization"]
+    USES --> U4["Autocomplete from<br/>aggregate popular queries"]
+
+    subgraph CONTROLS["User-facing controls that must actually work"]
+        UC1["View and delete history"]
+        UC2["Turn off personalization<br/>— and have it genuinely off"]
+        UC3["Private / incognito mode<br/>— no logging tied to identity"]
+        UC4["Data export"]
+        UC5["Auto-delete after N months"]
+    end
+
+    subgraph RISKS["Privacy risks specific to search"]
+        R1["⚠️ Rare queries are identifying<br/>even without a user id —<br/>a unique query IS a fingerprint"]
+        R2["⚠️ Autocomplete can leak<br/>another user's private query<br/>if popularity thresholds are too low"]
+        R3["⚠️ Aggregate statistics can be<br/>de-anonymized by intersection<br/>→ apply k-anonymity thresholds<br/>and differential privacy noise"]
+        R4["⚠️ Logs are a subpoena target;<br/>data you never stored cannot<br/>be compelled or breached"]
+    end
+
+    P3 -.must address.-> RISKS
+
+    classDef safe fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef risk fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class DROP,P3,P4,P5,UC1,UC2,UC3,UC4,UC5 safe
+    class R1,R2,R3,R4 risk

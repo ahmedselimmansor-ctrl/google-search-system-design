@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant DNS as DNS
+    participant AN as Anycast / BGP
+    participant ML as L4 Load Balancer
+    participant FE as Frontend (L7)
+    participant CELL as Serving Cell
+
+    U->>DNS: resolve search endpoint
+    DNS-->>U: anycast VIP<br/>(same IP announced from many sites)
+
+    U->>AN: TCP/QUIC SYN to VIP
+    Note over AN: BGP routes the packet to the<br/>topologically nearest PoP.<br/>No DNS latency, no client logic.
+
+    AN->>ML: packet arrives at nearest PoP
+    ML->>ML: consistent hashing on 5-tuple<br/>→ pick a backend
+    Note over ML: Maglev-style: connection<br/>tracking + consistent hash so<br/>backend churn does not reset<br/>existing connections.
+
+    ML->>FE: forward to frontend
+    FE->>FE: check cell health scores,<br/>load, and index version
+    FE->>CELL: dispatch query
+
+    alt Cell healthy
+        CELL-->>FE: results
+        FE-->>U: SERP
+    else Cell overloaded
+        FE->>FE: shed load or spill to<br/>a sibling cell in-region
+        Note over FE,CELL: Prefer in-region spill:<br/>cross-region adds ~100 ms
+    else Region unhealthy
+        Note over AN: Health checks withdraw the<br/>BGP announcement for that site.<br/>Anycast reroutes to the next<br/>nearest PoP automatically.
+    end

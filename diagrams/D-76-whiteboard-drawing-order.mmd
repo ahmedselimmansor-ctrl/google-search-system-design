@@ -1,0 +1,22 @@
+flowchart TB
+    START["Blank whiteboard"] --> S1["1️⃣ User → Frontend → Results<br/>Establish the request path first"]
+    S1 --> S2["2️⃣ Add the index<br/>Frontend → Index → Results"]
+    S2 --> S3["3️⃣ Shard the index<br/>'600 TB does not fit on one host'<br/>→ Root + N leaves"]
+    S3 --> S4["4️⃣ Explain doc vs term partitioning<br/>and why document partitioning wins"]
+    S4 --> S5["5️⃣ Add the ranking cascade<br/>L0 → L1 → L2 → L3<br/>with the doc counts at each stage"]
+    S5 --> S6["6️⃣ Add the result cache<br/>in front of retrieval, not behind"]
+    S6 --> S7["7️⃣ Now the offline half:<br/>Crawler → Processing → Index build"]
+    S7 --> S8["8️⃣ Add the feedback loop<br/>logs → ranking, logs → crawl priority"]
+    S8 --> S9["9️⃣ Only now: tiering, freshness,<br/>replication, degradation"]
+
+    S9 --> DEPTH{"Interviewer probes"}
+    DEPTH -->|"'How do you rank?'"| R1["Ch 08: cascade, PageRank,<br/>LTR, hybrid retrieval"]
+    DEPTH -->|"'How do you handle scale?'"| R2["Ch 03 + 06: sharding,<br/>tiering, compression"]
+    DEPTH -->|"'What if a server fails?'"| R3["Ch 12: degradation ladder,<br/>hedged requests, cells"]
+    DEPTH -->|"'How do you stay fresh?'"| R4["Ch 11: two-track indexing"]
+    DEPTH -->|"'How do you fight spam?'"| R5["Ch 14: layered defence,<br/>signal manipulability"]
+
+    classDef core fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef later fill:#fde68a,stroke:#b45309,color:#1c1917
+    class S1,S2,S3,S4,S5,S6 core
+    class S7,S8,S9 later

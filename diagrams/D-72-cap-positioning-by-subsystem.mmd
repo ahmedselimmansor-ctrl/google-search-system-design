@@ -1,0 +1,28 @@
+flowchart TB
+    subgraph AP["🟢 AP — Available under partition, eventually consistent"]
+        AP1["Index serving<br/>a partitioned replica keeps answering<br/>from possibly-stale data"]
+        AP2["Result caches<br/>staleness is bounded and intentional"]
+        AP3["Crawl database<br/>a delayed page update harms nobody"]
+        AP4["Click and query logs<br/>at-least-once, aggregated later"]
+        AP5["Document store<br/>eventual replication is fine"]
+    end
+
+    subgraph CP["🔴 CP — Consistent, unavailable under partition"]
+        CP1["Shard → server assignment<br/>two owners = corruption"]
+        CP2["Live index version pointer<br/>mixed versions = incoherent results"]
+        CP3["Legal removals<br/>must be correct everywhere"]
+        CP4["Webmaster authorization<br/>it is access control"]
+        CP5["Leader election<br/>split brain is unacceptable"]
+    end
+
+    NOTE["The split is not a compromise —<br/>it is the design.<br/><br/>PB of data are AP because users<br/>cannot perceive the difference.<br/>KB of metadata are CP because<br/>correctness is not negotiable.<br/><br/>Choosing one regime for the whole<br/>system would either make it<br/>unscalable (all CP) or incorrect (all AP)."]
+
+    AP --> NOTE
+    CP --> NOTE
+
+    classDef ap fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef cp fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef note fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class AP1,AP2,AP3,AP4,AP5 ap
+    class CP1,CP2,CP3,CP4,CP5 cp
+    class NOTE note

@@ -1,0 +1,49 @@
+flowchart TB
+    WEB["🌐 Web changes"]
+
+    WEB --> DETECT{"How was the<br/>change learned?"}
+
+    DETECT -->|"Push: feed, sitemap ping,<br/>API submission"| FAST
+    DETECT -->|"Pull: scheduled recrawl<br/>found new content"| CLASSIFY
+    DETECT -->|"Signal: trending query<br/>with no good results"| FAST
+
+    CLASSIFY{"Is this page<br/>freshness-critical?"} -->|"Yes — news, forum,<br/>high change rate,<br/>high query demand"| FAST
+    CLASSIFY -->|"No — the other 99.9%"| SLOW
+
+    subgraph FAST["⚡ FAST TRACK — streaming · seconds to minutes"]
+        F1["Priority fetch<br/>bypasses normal queue"]
+        F2["Streaming processing<br/>parse · dedupe · classify"]
+        F3["Incremental signal computation<br/>approximate PageRank,<br/>partial anchor text"]
+        F4["Write to in-memory<br/>real-time index segment"]
+        F5["Immediately searchable"]
+        F1 --> F2 --> F3 --> F4 --> F5
+    end
+
+    subgraph SLOW["🐢 BATCH TRACK — hours to days"]
+        S1["Normal crawl queue"]
+        S2["Batch processing"]
+        S3["Full-precision signals<br/>exact PageRank over<br/>the complete graph"]
+        S4["MapReduce index build"]
+        S5["Segment publish"]
+        S1 --> S2 --> S3 --> S4 --> S5
+    end
+
+    F5 --> SERVE
+    S5 --> SERVE
+
+    subgraph SERVE["🔍 Serving tier — queries both, merges results"]
+        M1[("Real-time segments<br/>small · in RAM · minutes old")]
+        M2[("Batch segments<br/>large · immutable · hours-days old")]
+        M3["Query fans out to both,<br/>results merged and deduped"]
+        M1 --> M3
+        M2 --> M3
+    end
+
+    F5 -.eventually superseded by.-> S5
+
+    classDef fast fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef slow fill:#dbeafe,stroke:#1e40af,color:#1c1917
+    classDef serve fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class F1,F2,F3,F4,F5 fast
+    class S1,S2,S3,S4,S5 slow
+    class M1,M2,M3 serve

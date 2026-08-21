@@ -1,0 +1,30 @@
+flowchart TB
+    C0["🌐 Corpus<br/>10¹¹ documents"]
+
+    C0 -->|"inverted index lookup<br/>cost: ~0"| C1["📑 Term-matched set<br/>10⁶ – 10⁹ documents<br/>never materialized"]
+
+    C1 -->|"BlockMax-WAND pruning<br/>exact top-k, no quality loss"| C2["⚡ L0 · Retrieved<br/>~10⁵ documents<br/>touched per shard"]
+
+    C2 -->|"L1: BM25 + static signals<br/>~10 ns per doc<br/>runs ON the leaf server"| C3["🔢 L1 · Cheap-scored<br/>~10³ per shard<br/>→ 10³ globally after merge"]
+
+    C3 -->|"L2: gradient-boosted trees<br/>hundreds of features<br/>~10 µs per doc"| C4["🌲 L2 · Feature-scored<br/>~10² documents"]
+
+    C4 -->|"L3: cross-encoder transformer<br/>full query-document attention<br/>~1 ms per doc, accelerated"| C5["🧠 L3 · Neural re-ranked<br/>~10 documents"]
+
+    C5 -->|"diversity · freshness ·<br/>host dedup · policy filters"| C6["✅ Final SERP<br/>10 results"]
+
+    subgraph BUDGET["Cost discipline — the whole point of the cascade"]
+        B1["L1: 10⁵ docs × 10 ns  =   1 ms"]
+        B2["L2: 10³ docs × 10 µs  =  10 ms"]
+        B3["L3: 10² docs × 1 ms   = 100 ms"]
+        B4["Invert any stage's ratio<br/>and the budget explodes"]
+    end
+
+    classDef wide fill:#dbeafe,stroke:#1e40af,color:#1c1917
+    classDef mid fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef narrow fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef final fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class C0,C1,C2 wide
+    class C3,C4 mid
+    class C5 narrow
+    class C6 final

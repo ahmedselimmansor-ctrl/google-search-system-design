@@ -1,0 +1,27 @@
+flowchart TB
+    ALL["All queries<br/>~10⁵ QPS average"]
+
+    ALL --> HEAD["🔥 HEAD<br/>~10³ distinct queries<br/>≈ 15–20% of all traffic<br/>'facebook' · 'weather' · 'youtube'"]
+    ALL --> TORSO["📊 TORSO<br/>~10⁷ distinct queries<br/>≈ 40–50% of traffic<br/>common but not universal"]
+    ALL --> TAIL["🌊 TAIL<br/>~10⁹⁺ distinct queries<br/>≈ 30–40% of traffic<br/>15% of daily queries are<br/>never-before-seen strings"]
+
+    HEAD --> HC["Cache: ✅ essentially always hit<br/>tiny memory footprint<br/>hit rate ~99%"]
+    TORSO --> TC["Cache: ✅ good hit rate<br/>most of the cache's value lives here<br/>hit rate ~50%"]
+    TAIL --> TLC["Cache: ❌ near-zero hit rate<br/>caching it wastes memory<br/>hit rate ~2%"]
+
+    HC & TC --> SAVE["Combined ~40% hit rate<br/>= ~40% of serving cost removed"]
+    TLC --> FULL["Tail queries always pay<br/>the full retrieval + ranking cost<br/>→ this is what the fleet is sized for"]
+
+    subgraph INSIGHT["The design consequence"]
+        I1["Cache capacity should target the TORSO.<br/>The head fits in almost no memory;<br/>the tail is uncacheable by nature."]
+        I2["Admission policy matters more than eviction policy:<br/>do not admit a query on first sight —<br/>most tail queries are seen exactly once."]
+    end
+
+    classDef head fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef torso fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef tail fill:#dbeafe,stroke:#1e40af,color:#1c1917
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class HEAD,HC head
+    class TORSO,TC torso
+    class TAIL,TLC tail
+    class SAVE good

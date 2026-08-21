@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node (only used for optional local Mermaid rendering)
+node_modules/
+package-lock.json
+npm-debug.log*
+
+# Rendered diagram output (regenerate with `npm run render`)
+assets/rendered/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/

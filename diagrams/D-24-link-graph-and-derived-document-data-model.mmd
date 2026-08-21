@@ -1,0 +1,83 @@
+erDiagram
+    DOCUMENT ||--o{ OUTLINK : "contains"
+    DOCUMENT ||--o{ INLINK : "receives"
+    DOCUMENT ||--|| CONTENT : "has"
+    DOCUMENT ||--o{ ANCHOR_TEXT : "described by"
+    DOCUMENT }o--|| HOST : "belongs to"
+    DOCUMENT }o--o| DUP_CLUSTER : "member of"
+    HOST }o--|| REG_DOMAIN : "part of"
+    HOST ||--o{ ROBOTS_RULE : "declares"
+    DUP_CLUSTER ||--|| DOCUMENT : "canonical is"
+
+    DOCUMENT {
+        bytes  docid_hash    PK
+        string url_canonical
+        int64  fetch_time
+        int32  http_status
+        int64  simhash
+        float  pagerank
+        float  spam_score
+        float  quality_score
+        string language
+        int32  content_length
+        bool   is_canonical
+    }
+
+    CONTENT {
+        bytes  docid_hash    FK
+        string title
+        string main_text
+        string meta_description
+        blob   structured_data
+        blob   field_offsets
+    }
+
+    OUTLINK {
+        bytes  src_docid     FK
+        bytes  dst_docid     FK
+        string anchor_text
+        bool   is_nofollow
+        int32  position_in_doc
+        bool   is_internal
+    }
+
+    INLINK {
+        bytes  dst_docid     FK
+        bytes  src_docid     FK
+        float  src_pagerank
+        string anchor_text
+    }
+
+    ANCHOR_TEXT {
+        bytes  docid         FK
+        string text
+        int32  frequency
+        int32  distinct_domains
+    }
+
+    HOST {
+        string hostname      PK
+        float  host_pagerank
+        float  host_spam_score
+        int32  crawl_delay_ms
+        int64  known_url_count
+    }
+
+    REG_DOMAIN {
+        string domain        PK
+        float  trust_score
+        int32  host_count
+    }
+
+    DUP_CLUSTER {
+        int64  cluster_id    PK
+        bytes  canonical_doc FK
+        int32  member_count
+    }
+
+    ROBOTS_RULE {
+        string hostname      FK
+        string user_agent
+        string path_pattern
+        bool   allow
+    }

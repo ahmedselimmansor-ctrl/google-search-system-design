@@ -1,0 +1,65 @@
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant FE as Frontend
+    participant QU as Query Understanding
+    participant CA as Result Cache
+    participant MX as Mixer
+    participant RT as Root
+    participant IM as Intermediate
+    participant LF as Leaf
+    participant RK as Ranking L2/L3
+    participant DS as Doc Store
+    participant SN as Snippets
+
+    C->>FE: query
+    FE->>FE: assign request id, start deadline clock
+    FE->>QU: parse & understand
+    QU-->>FE: structured plan
+    FE->>CA: lookup(normalized_query, locale, safesearch)
+
+    alt Cache hit and fresh
+        CA-->>FE: cached SERP
+        FE-->>C: results ✅ ~15 ms
+    else Cache miss
+        FE->>MX: execute plan (deadline: 250 ms)
+        MX->>RT: retrieve(top 1000)
+
+        par Fan-out with per-level deadlines
+            RT->>IM: sub-query, deadline 90 ms
+            IM->>LF: sub-query, deadline 70 ms
+        end
+
+        LF->>LF: WAND traversal + L1 scoring
+        LF-->>IM: top-100 docids + scores
+
+        Note over IM,LF: ⏱️ Hedged request:<br/>if a leaf has not replied by p95,<br/>send the same query to another<br/>replica and take the first answer.
+
+        alt Leaf times out entirely
+            IM->>IM: proceed without that shard
+            IM-->>RT: partial results + coverage flag
+            Note over IM,RT: Degrade, never fail.<br/>99.5% coverage still<br/>produces a good SERP.
+        end
+
+        IM-->>RT: merged top-K
+        RT-->>MX: global candidates (~1000)
+
+        MX->>RK: L2 rescore 1000 → 100
+        RK->>RK: L3 neural rerank 100 → 10
+        RK-->>MX: final order
+
+        par Snippets in parallel
+            MX->>DS: fetch attachments for top 10
+            DS-->>MX: text, title, metadata
+            MX->>SN: generate query-biased snippets
+            SN-->>MX: snippets
+        end
+
+        MX->>MX: blend verticals, host dedup, spam filter
+        MX->>CA: store with TTL by intent
+        MX-->>FE: SERP
+        FE-->>C: results ✅ ~210 ms
+    end
+
+    C->>FE: click (logged async)
+    FE-)RK: training signal

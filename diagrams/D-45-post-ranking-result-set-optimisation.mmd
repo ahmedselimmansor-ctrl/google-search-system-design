@@ -1,0 +1,24 @@
+flowchart LR
+    IN["Top ~50 by score"] --> DIV["Diversification"]
+
+    DIV --> D1["Host clustering<br/>max 2 results per domain,<br/>collapse the rest under<br/>'more results from…'"]
+    D1 --> D2["Intent coverage<br/>ambiguous query 'jaguar' →<br/>cover animal, car, team"]
+    D2 --> D3["MMR-style selection<br/>score −λ × max similarity<br/>to already-selected results"]
+    D3 --> D4["Content-type mix<br/>avoid ten forum threads"]
+
+    D4 --> FRESH["Freshness adjustment<br/>boost recency if news intent<br/>or query deserves freshness"]
+
+    FRESH --> FILT["Final filters"]
+    FILT --> F1["SafeSearch"]
+    FILT --> F2["Legal removals — region scoped"]
+    FILT --> F3["Spam threshold"]
+    FILT --> F4["Broken-link / soft-404 suppression"]
+
+    F1 & F2 & F3 & F4 --> WHY["Explainability annotations<br/>why this result ranks here<br/>— for debugging and raters"]
+
+    WHY --> OUT(("Final 10"))
+
+    classDef div fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef filt fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class D1,D2,D3,D4 div
+    class F1,F2,F3,F4 filt

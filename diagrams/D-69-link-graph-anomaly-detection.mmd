@@ -1,0 +1,38 @@
+flowchart TB
+    LG[("Link graph<br/>10¹¹ nodes · 10¹² edges")]
+
+    LG --> A["Structural analysis"]
+
+    A --> A1["🔍 Topology anomalies<br/>Dense bipartite cores:<br/>N sites all linking to M sites,<br/>with no organic-looking structure"]
+    A --> A2["🔍 Reciprocity ratio<br/>natural linking is mostly one-way;<br/>near-100% reciprocity is a network"]
+    A --> A3["🔍 Anchor-text entropy<br/>10,000 links all with the exact<br/>same commercial anchor text<br/>is not how humans link"]
+    A --> A4["🔍 Temporal bursts<br/>a page gaining 50,000 links<br/>in one day was bought"]
+    A --> A5["🔍 Infrastructure clustering<br/>same IP block, same registrar,<br/>same nameservers, same analytics id,<br/>same WHOIS pattern"]
+    A --> A6["🔍 Link-source diversity<br/>1,000 links from 3 domains ≪<br/>100 links from 100 domains"]
+
+    A1 & A2 & A3 & A4 & A5 & A6 --> SCORE["Spam probability per host"]
+
+    subgraph TRUST["TrustRank — propagate trust, not just authority"]
+        T1["Seed a small set of hand-vetted,<br/>unambiguously good sites"]
+        T2["Propagate trust along links,<br/>attenuating with distance"]
+        T3["Pages far from every trusted seed<br/>get low trust regardless of<br/>how much raw PageRank they<br/>accumulated internally"]
+        T1 --> T2 --> T3
+    end
+
+    LG --> TRUST
+    TRUST --> SCORE
+
+    SCORE --> ACTION{"Response"}
+    ACTION -->|"High confidence"| REMOVE["Remove from index"]
+    ACTION -->|"Medium confidence"| DEMOTE["Demote heavily"]
+    ACTION -->|"Suspicious links only"| IGNORE["✅ Ignore the bad links,<br/>keep the page<br/>— PREFERRED response"]
+    ACTION -->|"Uncertain"| REVIEW["Human review queue"]
+
+    IGNORE --> WHY["Why ignoring beats penalising:<br/>if inbound links could HURT a site,<br/>anyone could destroy a competitor<br/>by pointing toxic links at them.<br/><br/>Neutralising bad links is<br/>attack-resistant; penalising for<br/>them creates a new attack."]
+
+    classDef detect fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef key fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class A1,A2,A3,A4,A5,A6 detect
+    class IGNORE,T1,T2,T3 good
+    class WHY key

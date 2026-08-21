@@ -1,0 +1,33 @@
+flowchart TB
+    TEXT["Clean extracted text"] --> SCRIPT{"Detected script<br/>and language"}
+
+    SCRIPT -->|"Latin: EN, FR, DE, ES"| LAT["Whitespace + punctuation split"]
+    LAT --> LAT2["Lowercase · strip diacritics<br/>Porter/Snowball stemming<br/>compound splitting for DE"]
+
+    SCRIPT -->|"Arabic"| AR["Arabic pipeline"]
+    AR --> AR1["Strip tatweel ـ and diacritics ً ٌ ٍ َ ُ ِ ّ ْ"]
+    AR --> AR2["Normalize alef forms<br/>أ إ آ ٱ → ا"]
+    AR --> AR3["Normalize teh marbuta ة → ه<br/>and alef maqsura ى → ي"]
+    AR --> AR4["Normalize Arabic-Indic digits<br/>٠١٢٣ → 0123"]
+    AR --> AR5["Clitic segmentation<br/>و ف ب ك ل ال prefixes<br/>ه ها هم ك ي suffixes"]
+    AR --> AR6["Light stemming or<br/>root-pattern morphological analysis"]
+
+    SCRIPT -->|"CJK: ZH, JA"| CJK["No whitespace boundaries"]
+    CJK --> CJK1["Dictionary + statistical<br/>word segmentation"]
+    CJK --> CJK2["Also index character bigrams<br/>as a recall safety net"]
+
+    SCRIPT -->|"Korean"| KO["Agglutinative:<br/>morphological analysis required"]
+    SCRIPT -->|"Thai"| TH["No spaces:<br/>dictionary segmentation"]
+
+    LAT2 & AR6 & CJK2 & KO & TH --> COMMON["Common post-processing"]
+    COMMON --> C1["Position assignment<br/>for phrase queries"]
+    COMMON --> C2["Field tagging<br/>title · heading · body"]
+    COMMON --> C3["Entity and number recognition"]
+    COMMON --> OUT(("Token stream<br/>→ index builder"))
+
+    classDef ar fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef cjk fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef lat fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class AR,AR1,AR2,AR3,AR4,AR5,AR6 ar
+    class CJK,CJK1,CJK2,KO,TH cjk
+    class LAT,LAT2 lat

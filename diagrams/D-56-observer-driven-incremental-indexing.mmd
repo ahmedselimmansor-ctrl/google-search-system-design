@@ -1,0 +1,46 @@
+flowchart TB
+    W["Write: crawler stores<br/>new content for URL X"]
+
+    W --> T1[("Crawl table<br/>row: com.example/X<br/>column: contents:html ← NEW")]
+
+    T1 -->|"triggers"| O1["👁️ Observer: DocumentChanged"]
+
+    O1 --> A1["Recompute content hash + SimHash"]
+    A1 --> D{"Actually different<br/>from previous version?"}
+    D -->|"No — 304 or identical"| STOP["🛑 Stop.<br/>No downstream work.<br/>This early exit is what<br/>makes incremental viable."]
+    D -->|"Yes"| A2["Reparse: extract text, links, metadata"]
+
+    A2 --> T2[("Write: contents:text,<br/>metadata:*, outlinks:*")]
+
+    T2 -->|"triggers"| O2["👁️ Observer: LinksChanged"]
+    O2 --> A3["Diff old vs new outlink set"]
+    A3 --> A4["For each ADDED link → write<br/>an inlink record on the target row"]
+    A3 --> A5["For each REMOVED link → delete<br/>the inlink record on the target row"]
+
+    A4 & A5 --> T3[("Link graph rows updated<br/>on OTHER documents")]
+
+    T3 -->|"triggers"| O3["👁️ Observer: InlinksChanged"]
+    O3 --> A6["Update aggregated anchor text"]
+    A6 --> A7["Mark target's PageRank as stale<br/>⚠️ do NOT recompute globally —<br/>queue for the next batch pass"]
+
+    T2 -->|"triggers"| O4["👁️ Observer: ReadyToIndex"]
+    O4 --> A8["Emit index update:<br/>docid, tokens, positions, signals"]
+    A8 --> T4[("Real-time index segment")]
+
+    T4 --> SERVE(("Searchable<br/>within minutes"))
+
+    subgraph TX["Why this needs transactions"]
+        X1["An observer reads several rows<br/>and writes several rows."]
+        X2["Two observers firing concurrently<br/>on the same target row would<br/>corrupt the inlink set."]
+        X3["→ Percolator adds multi-row<br/>snapshot-isolation transactions<br/>ON TOP of the wide-column store,<br/>using a timestamp oracle."]
+        X1 --> X2 --> X3
+    end
+
+    O2 -.requires.-> TX
+
+    classDef obs fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    classDef stop fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class O1,O2,O3,O4 obs
+    class T1,T2,T3,T4 store
+    class STOP stop

@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant GSLB as Global LB (anycast)
+    participant FE as Frontend
+    participant QU as Query Understanding
+    participant CA as Result Cache
+    participant MX as Mixer
+    participant RT as Index Root
+    participant LF as Leaf Servers (×1000s)
+    participant RK as Ranking (L2/L3)
+    participant SN as Snippet Service
+
+    U->>GSLB: GET /search?q=...
+    GSLB->>FE: route to nearest healthy cell
+    FE->>QU: normalize, detect language, tokenize
+    QU->>QU: spell correct · synonyms · intent classify
+    QU->>CA: cache lookup (normalized query + context)
+
+    alt Cache hit (~30-60%)
+        CA-->>MX: cached result set
+    else Cache miss
+        CA-->>MX: miss
+        MX->>RT: scatter query to index
+        par Fan-out to all shards
+            RT->>LF: shard 1 ... shard N
+        end
+        LF->>LF: posting-list intersection + L1 scoring
+        LF-->>RT: top-K per shard
+        RT-->>MX: merged top-K candidates
+        MX->>RK: rescore candidates (L2, then L3)
+        RK-->>MX: final ordering
+        MX->>CA: populate cache with TTL
+    end
+
+    MX->>SN: fetch documents, build snippets
+    SN-->>MX: titles, snippets, thumbnails
+    MX->>MX: blend verticals, dedupe by host
+    MX-->>FE: SERP payload
+    FE-->>U: rendered results
+    U-->>FE: click / dwell (logged)
+
+    Note over U,SN: Total budget: p99 < 300 ms wall clock

@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    participant OP as Operator / Automation
+    participant TM as Traffic Manager
+    participant C1 as Cell A1 (target)
+    participant C2 as Sibling cells
+    participant MON as Monitoring
+
+    Note over OP,MON: === DRAINING A CELL ===
+    OP->>TM: begin drain of A1
+    TM->>TM: reduce A1 weight 100% → 50% → 10% → 0%
+    Note over TM,C2: Gradual, so siblings absorb<br/>load without their own overload
+    TM->>C2: increase weight
+    C1->>C1: finish in-flight requests
+    C1-->>TM: zero active traffic
+    TM-->>OP: A1 drained — safe to operate on
+
+    Note over OP,MON: === PROGRESSIVE ROLLOUT ===
+    OP->>C1: deploy new binary / index / model
+    C1->>C1: start, warm caches, load index
+    C1-->>MON: readiness check passes
+    OP->>TM: restore A1 to 1% traffic (canary)
+
+    MON->>MON: compare A1 vs siblings:<br/>latency · error rate · result quality ·<br/>coverage · CTR
+
+    alt Metrics healthy
+        MON-->>TM: green
+        TM->>TM: 1% → 5% → 25% → 50% → 100%
+        Note over TM,MON: Bake time at each step —<br/>long enough to observe the<br/>slowest-moving metric
+        OP->>C2: proceed to next cell
+    else Metrics regressed
+        MON-->>TM: 🚨 automatic rollback
+        TM->>TM: A1 weight → 0%
+        C1->>C1: revert to previous version
+        Note over OP,MON: Rollback is automatic and<br/>requires no human decision.<br/>Investigate after traffic is safe.
+    end
+
+    Note over OP,MON: === DR: LOSING A REGION ===
+    MON->>TM: 🔥 region EMEA unreachable
+    TM->>TM: withdraw BGP announcements for EMEA sites
+    Note over TM,C2: Anycast reroutes EMEA users<br/>to the next nearest region.<br/>Latency +80–150 ms, service intact.
+    TM->>C2: scale up remaining regions
+    Note over C2: This only works if regions run<br/>with headroom — capacity planning<br/>must assume N-1 regions.

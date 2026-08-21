@@ -1,0 +1,27 @@
+flowchart TB
+    subgraph DOCP["✅ Document partitioning — the standard choice"]
+        direction TB
+        DP["Each shard holds ALL terms<br/>for a SUBSET of documents"]
+        DPS1[("Shard 1<br/>docs 0–10⁸<br/>full lexicon")]
+        DPS2[("Shard 2<br/>docs 10⁸–2×10⁸<br/>full lexicon")]
+        DPS3[("Shard N<br/>…<br/>full lexicon")]
+        DP --> DPS1 & DPS2 & DPS3
+        DPQ["Query → ALL shards in parallel<br/>each returns its local top-K<br/>root merges N × K candidates"]
+        DPS1 & DPS2 & DPS3 --> DPQ
+    end
+
+    subgraph TERMP["⚠️ Term partitioning — rarely used at web scale"]
+        direction TB
+        TP["Each shard holds a SUBSET of terms<br/>for ALL documents"]
+        TPS1[("Shard A<br/>terms a–f<br/>all 10¹¹ docs")]
+        TPS2[("Shard B<br/>terms g–p<br/>all 10¹¹ docs")]
+        TPS3[("Shard C<br/>terms q–z<br/>all 10¹¹ docs")]
+        TP --> TPS1 & TPS2 & TPS3
+        TPQ["Query → only shards owning<br/>the query's terms<br/>but huge posting lists must<br/>cross the network to intersect"]
+        TPS1 & TPS2 & TPS3 --> TPQ
+    end
+
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef bad fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    class DP,DPS1,DPS2,DPS3,DPQ good
+    class TP,TPS1,TPS2,TPS3,TPQ bad

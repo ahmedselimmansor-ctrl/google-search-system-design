@@ -1,0 +1,33 @@
+flowchart TB
+    A1["📌 Assumption<br/>Documents indexed = 10¹¹"]
+    A2["📌 Assumption<br/>Avg raw HTML = 100 KB"]
+    A3["📌 Assumption<br/>Avg extracted text = 10 KB ≈ 1,500 tokens"]
+    A4["📌 Assumption<br/>Avg QPS = 10⁵ · peak factor 3×"]
+    A5["📌 Assumption<br/>Result cache hit rate = 40%"]
+
+    A1 --> S1["Raw corpus<br/>10¹¹ × 100 KB = 10 PB<br/>≈ 2 PB compressed 5:1"]
+    A1 --> S2["Text corpus<br/>10¹¹ × 10 KB = 1 PB<br/>≈ 250 TB compressed"]
+    A1 --> S3["Positional postings<br/>10¹¹ × 1,500 = 1.5 × 10¹⁴"]
+
+    A3 --> S3
+    S3 --> S4["Inverted index<br/>1.5 × 10¹⁴ × ~1.5 B<br/>≈ 225 TB compressed"]
+    A1 --> S5["Per-doc attachments<br/>features · anchors · vectors<br/>≈ 1–2 PB"]
+
+    S4 --> T["Tiering splits the index<br/>hot 1% · warm 10% · cold 89%"]
+    S5 --> T
+
+    A4 --> Q1["Peak QPS = 3 × 10⁵"]
+    A5 --> Q2["QPS reaching index<br/>= 3 × 10⁵ × 0.6 = 1.8 × 10⁵"]
+    Q1 --> Q2
+
+    T --> F["Fleet sizing<br/>servers = index bytes ÷ RAM per host<br/>× replicas needed for QPS"]
+    Q2 --> F
+
+    F --> OUT(("Machine count<br/>per tier"))
+
+    classDef asm fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef derived fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef result fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class A1,A2,A3,A4,A5 asm
+    class S1,S2,S3,S4,S5,Q1,Q2,T derived
+    class F,OUT result

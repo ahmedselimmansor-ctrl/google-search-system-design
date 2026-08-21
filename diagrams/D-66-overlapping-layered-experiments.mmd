@@ -1,0 +1,52 @@
+flowchart TB
+    REQ["Incoming request"] --> ID["Compute a stable diversion id<br/>hash(cookie or session)<br/>— MUST be stable so a user<br/>sees a consistent experience"]
+
+    ID --> LAYERS["Assign independently in each layer"]
+
+    subgraph L1["Layer 1 — Retrieval"]
+        A1["Control: current retrieval"]
+        A2["Exp 1a: wider candidate set"]
+        A3["Exp 1b: hybrid dense weight +10%"]
+    end
+
+    subgraph L2["Layer 2 — Ranking"]
+        B1["Control: current L3 model"]
+        B2["Exp 2a: new cross-encoder"]
+        B3["Exp 2b: freshness prior tweak"]
+    end
+
+    subgraph L3["Layer 3 — Presentation"]
+        C1["Control: current SERP"]
+        C2["Exp 3a: longer snippets"]
+        C3["Exp 3b: new vertical layout"]
+    end
+
+    LAYERS --> L1 & L2 & L3
+
+    L1 & L2 & L3 --> COMBINE["A user may be in one experiment<br/>from EACH layer simultaneously"]
+
+    COMBINE --> WHY["Why layers work:<br/>layers are chosen to be<br/>approximately independent,<br/>so their effects do not confound.<br/><br/>⚠️ If two experiments COULD interact,<br/>they must be placed in the SAME layer<br/>so a user gets at most one."]
+
+    WHY --> MEASURE["Measurement"]
+
+    MEASURE --> ME1["Quality: human side-by-side ratings"]
+    MEASURE --> ME2["Behaviour: CTR, long clicks,<br/>reformulation, abandonment"]
+    MEASURE --> ME3["Performance: latency, error rate"]
+    MEASURE --> ME4["Cost: CPU, RAM, cache hit rate"]
+
+    ME1 & ME2 & ME3 & ME4 --> STAT["Statistical analysis"]
+    STAT --> ST1["Sufficient power before reading results"]
+    STAT --> ST2["Multiple-comparison correction<br/>— with 100s of experiments,<br/>5% of them show p<0.05 by chance"]
+    STAT --> ST3["Guardrail metrics must not regress,<br/>even if the primary metric improves"]
+    STAT --> ST4["Novelty effects: re-measure after<br/>the initial curiosity decays"]
+
+    ST1 & ST2 & ST3 & ST4 --> DECIDE{"Ship?"}
+    DECIDE -->|"Yes"| RAMP["Progressive ramp — Chapter 12"]
+    DECIDE -->|"No"| LEARN["Record the negative result<br/>— it has real value"]
+
+    classDef exp fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef stat fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef warn fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class A2,A3,B2,B3,C2,C3 exp
+    class ST1,ST2,ST3,ST4 stat
+    class WHY,ST2 warn

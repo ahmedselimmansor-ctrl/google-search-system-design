@@ -1,0 +1,22 @@
+flowchart TB
+    SLI["SLIs — what we measure<br/>latency · availability · quality"]
+    SLI --> SLO["SLOs — what we promise<br/>p99 &lt; 300 ms · 99.99% success"]
+    SLO --> EB["Error budget<br/>1 − SLO, measured over 28 days"]
+
+    EB --> D{"Budget<br/>remaining?"}
+    D -->|"> 50% left"| FAST["🚀 Ship freely<br/>experiment aggressively"]
+    D -->|"10–50% left"| CAUTION["⚠️ Slow rollouts<br/>extra canary time"]
+    D -->|"< 10% left"| FREEZE["🛑 Feature freeze<br/>reliability work only"]
+    D -->|"exhausted"| POST["🔍 Postmortem required<br/>error budget reset gated"]
+
+    FAST --> SLI
+    CAUTION --> SLI
+    FREEZE --> SLI
+    POST --> SLI
+
+    classDef ok fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef warn fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef bad fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class FAST ok
+    class CAUTION warn
+    class FREEZE,POST bad

@@ -1,0 +1,42 @@
+flowchart TB
+    subgraph TRIGGERS["What invalidates a cached SERP"]
+        E1["New index version published"]
+        E2["Document removed — legal or policy"]
+        E3["Breaking news detected for a topic"]
+        E4["Ranking model rolled out"]
+        E5["Natural TTL expiry"]
+        E6["Spam demotion applied"]
+    end
+
+    E1 --> S1{"Strategy"}
+    E2 --> S2{"Strategy"}
+    E3 --> S3{"Strategy"}
+    E4 --> S1
+    E5 --> S4{"Strategy"}
+    E6 --> S2
+
+    S1 --> V["🏷️ Version-tagged keys<br/>cache key includes index_version<br/>publishing a new version makes<br/>every old entry unreachable —<br/>no explicit purge needed"]
+
+    S2 --> P["📢 Active purge broadcast<br/>docid → cache tier<br/>must be FAST and RELIABLE<br/>this is the legal-compliance path"]
+
+    S3 --> T["⏱️ TTL collapse<br/>drop TTL for the affected topic<br/>from hours to seconds"]
+
+    S4 --> L["🔄 Lazy expiry + refresh-ahead<br/>serve stale while<br/>asynchronously recomputing"]
+
+    V & P & T & L --> RISK{"Risk check"}
+
+    RISK --> R1["⚠️ Thundering herd:<br/>if all entries expire together,<br/>the index tier is hit by a<br/>synchronized wave"]
+    R1 --> F1["✅ Fix: randomized TTL jitter<br/>+ request coalescing<br/>(one recompute per key, others wait)"]
+
+    RISK --> R2["⚠️ Cold cache after deploy:<br/>a restarted cache tier has<br/>0% hit rate and can<br/>overload the index tier"]
+    R2 --> F2["✅ Fix: staged restarts,<br/>cache warming from a persistent<br/>snapshot, admission rate limits"]
+
+    RISK --> R3["⚠️ Serving removed content:<br/>a purge that fails silently is a<br/>compliance failure, not a perf bug"]
+    R3 --> F3["✅ Fix: purge acknowledgements,<br/>a deny-list checked at read time<br/>as a backstop, audit logging"]
+
+    classDef strat fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef risk fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef fix fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class V,P,T,L strat
+    class R1,R2,R3 risk
+    class F1,F2,F3 fix

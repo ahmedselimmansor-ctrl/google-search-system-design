@@ -1,0 +1,58 @@
+flowchart TB
+    subgraph USERS["Users worldwide"]
+        U1["🌎 Americas"]
+        U2["🌍 EMEA"]
+        U3["🌏 APAC"]
+    end
+
+    subgraph EDGE["Edge / PoP layer — 100s of locations"]
+        E1["TLS termination<br/>TCP + QUIC handshakes<br/>close to the user"]
+        E2["Static asset serving"]
+        E3["Anycast IP absorption"]
+    end
+
+    U1 & U2 & U3 --> E1
+
+    subgraph REGIONS["Serving regions — each independently complete"]
+        subgraph R1["Region: Americas"]
+            R1C1["Cell A1"]
+            R1C2["Cell A2"]
+            R1C3["Cell A3"]
+        end
+        subgraph R2["Region: EMEA"]
+            R2C1["Cell E1"]
+            R2C2["Cell E2"]
+        end
+        subgraph R3["Region: APAC"]
+            R3C1["Cell P1"]
+            R3C2["Cell P2"]
+        end
+    end
+
+    E1 --> R1 & R2 & R3
+
+    subgraph CELL["What a cell contains — a complete, independent search stack"]
+        C1["Frontends + mixers"]
+        C2["Full index replica<br/>all tiers, all shards"]
+        C3["Ranking tier + accelerators"]
+        C4["Local caches"]
+        C5["Document store replica"]
+    end
+
+    R1C1 -.is.-> CELL
+
+    subgraph GLOBAL["Global services — small, strongly consistent"]
+        G1["Index version coordination"]
+        G2["Legal removal rules"]
+        G3["Global traffic manager"]
+        G4["Config and experiment assignment"]
+    end
+
+    GLOBAL -.controls.-> R1 & R2 & R3
+
+    classDef edge fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef region fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef glob fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class E1,E2,E3 edge
+    class R1C1,R1C2,R1C3,R2C1,R2C2,R3C1,R3C2 region
+    class G1,G2,G3,G4 glob

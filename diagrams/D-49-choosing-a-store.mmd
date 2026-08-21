@@ -1,0 +1,23 @@
+flowchart TB
+    START["New data to store"] --> Q1{"Size?"}
+
+    Q1 -->|"PB scale"| Q2{"Access pattern?"}
+    Q1 -->|"GB–TB"| Q5{"Needs cross-row<br/>transactions?"}
+    Q1 -->|"KB–MB"| Q7{"Needs consensus<br/>and watch/notify?"}
+
+    Q2 -->|"Sequential, whole files,<br/>write-once"| DFS["📁 Distributed file system<br/>index segments · raw crawl archives ·<br/>MapReduce intermediates"]
+    Q2 -->|"Random access by key,<br/>sparse columns, versioned"| WC["🗄️ Wide-column store<br/>crawl DB · doc attachments ·<br/>link graph · seen-URL exact store"]
+
+    Q5 -->|"Yes, and must be<br/>correct across regions"| SPAN["🌍 Globally consistent DB<br/>legal removals · webmaster settings ·<br/>quotas · billing-grade data"]
+    Q5 -->|"No"| WC
+
+    Q7 -->|"Yes"| LOCK["🔒 Lock / coordination service<br/>shard→server assignment ·<br/>live index version pointer ·<br/>leader election · service discovery"]
+    Q7 -->|"No"| CFG["📋 Config distribution<br/>pushed with the binary"]
+
+    DFS & WC --> EV["Eventual consistency<br/>✅ cheap · scales horizontally<br/>⚠️ readers must be idempotent"]
+    SPAN & LOCK --> ST["Strong consistency<br/>✅ correct by construction<br/>⚠️ costs a consensus round trip<br/>⚠️ capacity is bounded"]
+
+    classDef ev fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef st fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class DFS,WC,EV ev
+    class SPAN,LOCK,ST st

@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph SOURCES["Instrumented services"]
+        SV1["Frontend"]
+        SV2["Query understanding"]
+        SV3["Root / leaf"]
+        SV4["Ranking"]
+        SV5["Crawler"]
+        SV6["Index builder"]
+    end
+
+    SOURCES --> M["📊 METRICS<br/>numeric time series<br/>cheap · aggregated · always on<br/>counters · gauges · histograms<br/><br/>answers: IS something wrong?"]
+    SOURCES --> L["📝 LOGS<br/>structured events<br/>expensive at full volume<br/>→ sampled + tail-based retention<br/><br/>answers: WHAT exactly happened?"]
+    SOURCES --> T["🔗 TRACES<br/>causally linked spans<br/>sampled ~0.01–1%<br/>propagated trace id<br/><br/>answers: WHERE is the time going?"]
+
+    M --> TS[("Time-series database<br/>downsampled by age")]
+    L --> LS[("Log store<br/>indexed, short retention")]
+    T --> TR[("Trace store<br/>sampled, searchable")]
+
+    TS --> D1["Dashboards"]
+    TS --> D2["SLO burn-rate alerts"]
+    TS --> D3["Anomaly detection"]
+    LS --> D4["Incident forensics"]
+    TR --> D5["Latency attribution"]
+    TR --> D6["Dependency mapping"]
+
+    subgraph QUALITY["Search-specific signals — the ones generic APM misses"]
+        Q1["Result quality: NDCG on golden queries,<br/>continuously evaluated in production"]
+        Q2["Index coverage: % of shards<br/>that answered each query"]
+        Q3["Index freshness: age distribution<br/>of served documents"]
+        Q4["Crawl health: fetch success rate,<br/>politeness violations (must be 0)"]
+        Q5["Cache effectiveness by segment"]
+        Q6["Behavioural: CTR, long-click rate,<br/>reformulation rate, abandonment"]
+    end
+
+    SOURCES --> QUALITY
+    QUALITY --> D1 & D2
+
+    classDef metric fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef log fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef trace fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef qual fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class M,TS metric
+    class L,LS log
+    class T,TR trace
+    class Q1,Q2,Q3,Q4,Q5,Q6 qual

@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph LABELS["① Label acquisition"]
+        HR["Human raters<br/>guideline-driven judgements<br/>graded 0–4 relevance<br/>expensive, unbiased"]
+        CL["Click logs<br/>cheap, abundant<br/>heavily position-biased"]
+        DEBIAS["Bias correction<br/>inverse propensity weighting<br/>position-bias model<br/>result-randomization experiments"]
+        CL --> DEBIAS
+    end
+
+    subgraph FEATS["② Feature extraction"]
+        FX["Log query-document feature vectors<br/>exactly as computed in production<br/>⚠️ training/serving skew is<br/>the #1 source of silent failure"]
+    end
+
+    HR & DEBIAS --> FX
+
+    subgraph TRAIN["③ Model training"]
+        OBJ{"Objective formulation"}
+        OBJ -->|"Pointwise"| PW["Predict relevance per doc<br/>simple, ignores ranking structure"]
+        OBJ -->|"Pairwise"| PR2["Predict which of two docs<br/>ranks higher — RankNet"]
+        OBJ -->|"Listwise"| LW["Optimize the whole list<br/>directly against NDCG —<br/>LambdaMART, LambdaRank"]
+        LW --> MODEL["Trained model<br/>GBDT for L2 · transformer for L3"]
+        PW --> MODEL
+        PR2 --> MODEL
+    end
+
+    FX --> OBJ
+
+    subgraph EVAL["④ Offline evaluation"]
+        E1["NDCG@10 on held-out<br/>human-rated queries"]
+        E2["Slice analysis:<br/>by language · locale ·<br/>query length · intent · head vs tail"]
+        E3["Counterfactual estimation<br/>from logged data"]
+    end
+
+    MODEL --> E1 & E2 & E3
+
+    E1 & E2 & E3 --> GATE{"Beats production<br/>on every slice?"}
+    GATE -->|"No"| BACK["Iterate — investigate<br/>the regressed slice"]
+    BACK --> OBJ
+
+    GATE -->|"Yes"| AB["⑤ Online A/B test<br/>small traffic slice<br/>see Chapter 13"]
+
+    AB --> METRICS{"Online metrics"}
+    METRICS --> M1["Human side-by-side rating ⬆"]
+    METRICS --> M2["Long-click rate ⬆"]
+    METRICS --> M3["Query reformulation ⬇"]
+    METRICS --> M4["Latency within SLO"]
+
+    M1 & M2 & M3 & M4 --> SHIP{"All green?"}
+    SHIP -->|"Yes"| RAMP["Ramp 1% → 10% → 50% → 100%"]
+    SHIP -->|"No"| ROLL["🛑 Roll back, analyze"]
+
+    RAMP --> PROD(("Production ranking"))
+    PROD -.->|"generates new logs"| CL
+
+    classDef human fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef risky fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef ml fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class HR,M1 human
+    class CL,FX risky
+    class PW,PR2,LW,MODEL ml

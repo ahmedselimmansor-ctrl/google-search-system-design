@@ -1,0 +1,53 @@
+sequenceDiagram
+    autonumber
+    participant FR as Frontier
+    participant W as Fetch Worker
+    participant DC as DNS Cache
+    participant DNS as DNS Resolver
+    participant RC as Robots Cache
+    participant H as Target Host
+    participant ST as Content Store
+
+    FR->>W: lease URL + host token
+    W->>DC: resolve host
+
+    alt DNS cached and fresh
+        DC-->>W: IP address
+    else DNS miss or expired
+        DC->>DNS: recursive query
+        DNS-->>DC: A / AAAA records
+        DC-->>W: IP address, cached with TTL
+    end
+
+    W->>RC: robots rules for host?
+    alt Robots cached and fresh
+        RC-->>W: allow / disallow rules
+    else Robots stale or missing
+        RC->>H: GET /robots.txt
+        H-->>RC: robots body or error
+        RC-->>W: parsed rules, TTL 24h
+    end
+
+    alt URL disallowed
+        W-->>FR: drop, record decision
+    else Allowed
+        W->>H: GET url<br/>If-Modified-Since / If-None-Match
+        alt 304 Not Modified
+            H-->>W: 304
+            W->>ST: bump last-verified timestamp only
+            Note over W,ST: Cheapest possible outcome —<br/>no body transferred, no reparse
+        else 200 OK
+            H-->>W: body (capped at N MB)
+            W->>W: content-type check, charset detect
+            W->>W: content hash + SimHash
+            W->>ST: append new version
+        else 3xx Redirect
+            H-->>W: Location header
+            W-->>FR: enqueue target, record redirect chain
+        else 4xx / 5xx
+            H-->>W: error status
+            W-->>FR: schedule retry or mark gone
+        end
+    end
+
+    W-->>FR: release host token,<br/>set next_fetch_time

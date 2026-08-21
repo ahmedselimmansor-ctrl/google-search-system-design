@@ -1,0 +1,52 @@
+flowchart TB
+    subgraph WEB["🌐 The Open Web"]
+        SITES["~200B+ known URLs<br/>HTML · PDF · Video · Feeds"]
+    end
+
+    subgraph INGEST["① INGESTION — offline, continuous"]
+        CRAWL["Crawler Fleet<br/>fetch · robots · politeness"]
+        PROC["Content Processing<br/>parse · normalize · dedup"]
+        LINK["Link Graph Builder<br/>PageRank · anchors"]
+    end
+
+    subgraph BUILD["② INDEX CONSTRUCTION — batch + streaming"]
+        DOCDB[("Document Store<br/>Bigtable-like")]
+        IDX["Index Builder<br/>MapReduce · compaction"]
+        SHARDS[("Inverted Index<br/>thousands of shards")]
+    end
+
+    subgraph SERVE["③ SERVING — online, p99 &lt; 300 ms"]
+        FE["Frontend / GSLB"]
+        QU["Query Understanding"]
+        MIX["Mixer / Blender"]
+        ROOT["Index Root"]
+        LEAF["Leaf Servers<br/>retrieval + L1 scoring"]
+        RANK["Ranking Stack<br/>L2 · L3 · re-rank"]
+        CACHE[("Result Cache")]
+    end
+
+    USER(("👤 User"))
+
+    SITES --> CRAWL --> PROC --> DOCDB
+    PROC --> LINK --> IDX
+    DOCDB --> IDX --> SHARDS
+
+    USER --> FE --> QU --> MIX
+    MIX <--> CACHE
+    MIX --> ROOT --> LEAF
+    SHARDS -.serves.-> LEAF
+    LEAF --> RANK --> MIX --> FE --> USER
+
+    LOGS["Query & Click Logs"]
+    USER -.interactions.-> LOGS
+    LOGS -.training signal.-> RANK
+    LOGS -.crawl priority.-> CRAWL
+
+    classDef ingest fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef build fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef serve fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class CRAWL,PROC,LINK ingest
+    class IDX build
+    class FE,QU,MIX,ROOT,LEAF,RANK serve
+    class DOCDB,SHARDS,CACHE store

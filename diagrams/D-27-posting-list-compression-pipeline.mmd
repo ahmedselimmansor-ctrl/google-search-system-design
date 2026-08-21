@@ -1,0 +1,33 @@
+flowchart TB
+    RAW["Raw docids for term 'search'<br/>1,247 · 1,251 · 1,299 · 1,300 · 1,847 …<br/>8 bytes each = 64 bits/posting"]
+
+    RAW --> SORT["① Sort ascending<br/>required for gap coding<br/>and for fast intersection"]
+    SORT --> DELTA["② Delta encode<br/>1,247 · 4 · 48 · 1 · 547 …<br/>gaps are small numbers"]
+
+    DELTA --> CHOICE{"③ Choose codec"}
+
+    CHOICE -->|"Simple, byte-aligned"| VB["Variable-byte<br/>7 data bits + 1 continuation bit<br/>small gaps → 1 byte<br/>fast to decode"]
+    CHOICE -->|"Best ratio, bit-aligned"| GOL["Golomb / Rice<br/>optimal for geometric gaps<br/>slower decode"]
+    CHOICE -->|"SIMD-friendly, modern"| PFOR["PForDelta / SIMD-BP128<br/>pack blocks of 128 at a<br/>common bit-width<br/>exceptions stored separately"]
+
+    VB & GOL & PFOR --> SKIP["④ Add skip pointers<br/>every √n postings<br/>enables O(√n) seek<br/>during intersection"]
+
+    SKIP --> BLOCK["⑤ Block structure<br/>128 postings per block<br/>with block max-score for<br/>WAND / BlockMax pruning"]
+
+    BLOCK --> OUT["≈ 1.5 bytes per positional posting<br/><br/>64 bits → 12 bits<br/>≈ 5× reduction"]
+
+    subgraph EXTRA["Additional levers"]
+        E1["Docid reordering:<br/>assign nearby ids to similar docs<br/>→ smaller gaps → 10-20% further gain"]
+        E2["Frequency capping:<br/>tf above ~255 adds no ranking value"]
+        E3["Position pruning:<br/>drop positions in tier 2,<br/>lose phrase queries, save 60%"]
+        E4["Stopword handling:<br/>keep but store cheaply —<br/>deleting breaks phrase search"]
+    end
+
+    OUT --> EXTRA
+
+    classDef step fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef codec fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef win fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class SORT,DELTA,SKIP,BLOCK step
+    class VB,GOL,PFOR codec
+    class OUT win

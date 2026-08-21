@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph IN["Inputs"]
+        I1["Peak QPS<br/>3 × 10⁵"]
+        I2["Cache hit 40%"]
+        I3["Index size 600 TB"]
+        I4["RAM/host 512 GB"]
+        I5["300 QPS per<br/>server-set"]
+    end
+
+    I1 --> M1["Index QPS<br/>1.8 × 10⁵"]
+    I2 --> M1
+
+    I3 --> M2["Tier split<br/>6 TB · 60 TB · 534 TB"]
+    M2 --> M3["Servers per copy<br/>12 · 118 · 267"]
+    I4 --> M3
+
+    M1 --> M4["Copies needed<br/>600 · 90 · 36"]
+    I5 --> M4
+
+    M3 --> M5["Leaf fleet<br/>≈ 27,400"]
+    M4 --> M5
+
+    M5 --> M6["+ root, mixer, ranking,<br/>snippets, cache<br/>≈ 35,000 per region"]
+    M6 --> M7["× 8 regions<br/>≈ 280,000 machines"]
+
+    classDef inp fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef calc fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef out fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class I1,I2,I3,I4,I5 inp
+    class M1,M2,M3,M4,M6 calc
+    class M5,M7 out

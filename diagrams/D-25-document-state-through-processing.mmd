@@ -1,0 +1,34 @@
+stateDiagram-v2
+    [*] --> RawBytes
+
+    RawBytes --> Decoded: charset resolved
+    RawBytes --> Unprocessable: binary / unsupported / corrupt
+
+    Decoded --> Parsed: DOM built
+    Decoded --> RenderQueued: JS-dependent and worth rendering
+    RenderQueued --> Parsed: headless render complete
+    RenderQueued --> Parsed: render timeout — use static DOM
+
+    Parsed --> Extracted: boilerplate removed, fields segmented
+    Extracted --> Tokenized: language detected, tokens emitted
+
+    Tokenized --> Classified: quality and safety scores attached
+    Classified --> Fingerprinted: SimHash computed
+
+    Fingerprinted --> CanonicalDoc: chosen as cluster representative
+    Fingerprinted --> DuplicateDoc: another doc is canonical
+
+    CanonicalDoc --> ReadyToIndex
+    DuplicateDoc --> SignalsOnly: links and anchors merged into canonical
+
+    ReadyToIndex --> [*]: → Chapter 06
+    SignalsOnly --> [*]
+    Unprocessable --> [*]
+
+    note right of DuplicateDoc
+        A duplicate is not discarded.
+        Its inbound links and anchor text
+        are merged into the canonical
+        document — otherwise mirrors
+        would silently destroy PageRank.
+    end note

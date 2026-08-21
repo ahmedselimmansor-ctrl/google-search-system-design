@@ -1,0 +1,32 @@
+flowchart LR
+    subgraph FWD["Forward view — what we crawled"]
+        D1["doc 17<br/>'the quick brown fox'"]
+        D2["doc 42<br/>'quick brown dogs run'"]
+        D3["doc 99<br/>'the fox and the hound'"]
+    end
+
+    FWD -->|"INVERT"| INV
+
+    subgraph INV["Inverted view — what we query"]
+        direction TB
+        L["📖 Lexicon / term dictionary<br/>term → df, pointer, stats"]
+
+        T1["'brown' · df=2"] --> P1["→ 17:[3] · 42:[2]"]
+        T2["'fox' · df=2"] --> P2["→ 17:[4] · 99:[2]"]
+        T3["'quick' · df=2"] --> P3["→ 17:[2] · 42:[1]"]
+        T4["'hound' · df=1"] --> P4["→ 99:[5]"]
+
+        L --- T1
+        L --- T2
+        L --- T3
+        L --- T4
+    end
+
+    INV --> Q["Query: 'quick brown'<br/>intersect P3 ∩ P1<br/>= {17, 42}<br/><br/>Phrase check: positions<br/>doc 17: quick@2, brown@3 ✅ adjacent<br/>doc 42: quick@1, brown@2 ✅ adjacent"]
+
+    classDef fwd fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef inv fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef res fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class D1,D2,D3 fwd
+    class T1,T2,T3,T4,P1,P2,P3,P4,L inv
+    class Q res

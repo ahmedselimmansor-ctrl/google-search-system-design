@@ -1,0 +1,39 @@
+flowchart TB
+    subgraph OFFLINE["Offline — at index time"]
+        D["Document text"] --> DE["Document encoder<br/>transformer bi-encoder"]
+        DE --> DV["Dense vector<br/>768-dim, quantized to int8"]
+        DV --> ANN["ANN index construction"]
+        ANN --> A1["HNSW: navigable small-world graph<br/>excellent recall, high RAM"]
+        ANN --> A2["IVF-PQ: coarse cluster +<br/>product quantization<br/>lower RAM, tunable recall"]
+    end
+
+    subgraph ONLINE["Online — at query time"]
+        Q["Query text"] --> QE["Query encoder<br/>same embedding space"]
+        QE --> QV["Query vector"]
+    end
+
+    QV --> SEARCH["ANN search<br/>approximate nearest neighbours<br/>~1–5 ms for top-1000"]
+    A1 & A2 --> SEARCH
+
+    subgraph HYBRID["Hybrid retrieval — both paths run"]
+        LEX["🔤 Lexical candidates<br/>BM25 / inverted index<br/>✅ exact terms, names, numbers, codes<br/>✅ interpretable, cheap<br/>❌ vocabulary mismatch"]
+        SEM["🧠 Semantic candidates<br/>dense vector search<br/>✅ synonyms, paraphrase, cross-lingual<br/>❌ weak on rare exact strings<br/>❌ opaque, expensive to update"]
+    end
+
+    SEARCH --> SEM
+    LEXIN["Inverted index<br/>Chapter 06"] --> LEX
+
+    LEX & SEM --> FUSE["Fusion"]
+    FUSE --> F1["Reciprocal Rank Fusion:<br/>score = Σ 1/(k + rank_i)<br/>no score calibration needed"]
+    FUSE --> F2["Learned fusion:<br/>both scores as L2 features"]
+
+    F1 & F2 --> CAND["Merged candidate set"]
+    CAND --> XE["Cross-encoder re-ranking<br/>query and document read TOGETHER<br/>full attention between them<br/>far more accurate, far more expensive"]
+    XE --> FINAL(("Final ranking"))
+
+    classDef lex fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef sem fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    classDef fuse fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class LEX,LEXIN lex
+    class SEM,DE,QE,DV,QV,SEARCH sem
+    class FUSE,F1,F2,CAND fuse

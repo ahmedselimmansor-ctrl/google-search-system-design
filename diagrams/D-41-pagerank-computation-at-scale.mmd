@@ -1,0 +1,38 @@
+flowchart TB
+    G[("Link graph<br/>10¹¹ nodes · 10¹² edges<br/>far too large for one machine")]
+
+    G --> INIT["Initialize<br/>PR(p) = 1/N for all p"]
+
+    INIT --> ITER["Iteration k"]
+
+    subgraph MR["One iteration = one MapReduce"]
+        MAP["MAP<br/>for each page q with rank PR(q):<br/>emit ⟨p, PR(q)/L(q)⟩ for each outlink p<br/>also emit ⟨q, adjacency list⟩"]
+        SHUF["SHUFFLE<br/>group contributions by target page"]
+        RED["REDUCE<br/>PR(p) = (1−d)/N + d × Σ contributions<br/>re-emit adjacency list for next round"]
+        MAP --> SHUF --> RED
+    end
+
+    ITER --> MAP
+    RED --> CONV{"Converged?<br/>Σ|PR_k − PR_k−1| < ε<br/>typically 20–50 iterations"}
+
+    CONV -->|"No"| ITER
+    CONV -->|"Yes"| POST["Post-processing"]
+
+    POST --> P1["Handle dangling nodes<br/>pages with no outlinks<br/>redistribute their mass uniformly"]
+    POST --> P2["Log-scale and bucket<br/>into a small integer<br/>— only relative order matters"]
+    POST --> P3["Compute host-level<br/>and domain-level aggregates"]
+
+    P1 & P2 & P3 --> OUT[("Per-document authority score<br/>→ stored in doc attachments<br/>→ shipped with the index")]
+
+    subgraph VARIANTS["Practical variants"]
+        V1["Topic-sensitive PageRank:<br/>separate vectors per topic,<br/>combined by query topic"]
+        V2["TrustRank:<br/>seed from hand-vetted good sites,<br/>propagate trust to fight spam"]
+        V3["Damped by link quality:<br/>nofollow, paid links and<br/>link-farm edges discounted"]
+    end
+
+    OUT --> VARIANTS
+
+    classDef compute fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class MAP,SHUF,RED,INIT compute
+    class G,OUT store

@@ -1,0 +1,33 @@
+gantt
+    title Distributed trace: one slow query (units: milliseconds)
+    dateFormat X
+    axisFormat %s
+
+    section frontend
+    HandleSearch (root span)          :active, fe, 0, 340
+    parseRequest                      :fe1, 2, 6
+
+    section query-understanding
+    understand                        :qu, 6, 34
+    spellCheck                        :qu1, 8, 18
+    intentClassify                    :qu2, 18, 28
+    embedQuery                        :qu3, 28, 34
+
+    section cache
+    resultCacheLookup (MISS)          :ca, 34, 37
+
+    section retrieval
+    rootFanout                        :active, rt, 37, 195
+    intermediate-07                   :im, 39, 193
+    leaf-0712 (normal)                :lf1, 41, 96
+    leaf-0713 (normal)                :lf2, 41, 92
+    leaf-0714 SLOW - GC pause         :crit, lf3, 41, 191
+    leaf-0714-hedge (replica)         :done, lf4, 130, 188
+
+    section ranking
+    L2 rescore                        :l2, 195, 228
+    L3 neural rerank                  :l3, 228, 288
+
+    section assembly
+    snippetGeneration                 :sn, 288, 322
+    blendAndSerialize                 :bl, 322, 338

@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph GOOD["✅ Metrics worth optimizing"]
+        G1["Hit rate by layer<br/>and by query segment"]
+        G2["Cost avoided<br/>= hits × cost per index query<br/>THE metric — it is money"]
+        G3["Staleness distribution<br/>p50 / p99 age of served entries"]
+        G4["Origin QPS reduction"]
+        G5["Correctness incidents<br/>must be zero"]
+    end
+
+    subgraph BAD["⚠️ Metrics that mislead"]
+        B1["Raw hit rate alone<br/>→ gameable by caching<br/>cheap queries and<br/>lengthening TTLs"]
+        B2["Cache latency<br/>→ already ~1 ms;<br/>optimizing it changes nothing"]
+        B3["Memory utilization<br/>→ a full cache is not<br/>necessarily an effective one"]
+    end
+
+    G2 --> DECIDE{"Decision"}
+    DECIDE --> D1["Add memory if<br/>marginal cost avoided ><br/>marginal RAM cost"]
+    DECIDE --> D2["Lengthen TTL only if<br/>staleness stays within<br/>the intent's tolerance"]
+    DECIDE --> D3["Improve admission policy<br/>— usually the cheapest win"]
+
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef bad fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class G1,G2,G3,G4,G5 good
+    class B1,B2,B3 bad

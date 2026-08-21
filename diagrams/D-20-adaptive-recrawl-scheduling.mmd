@@ -1,0 +1,31 @@
+flowchart TB
+    HIST[("Fetch history per URL<br/>timestamps + content hashes")]
+    HIST --> EST["Change-rate estimator<br/>Poisson λ from observed changes"]
+
+    EST --> CLASS{"Classify URL"}
+
+    CLASS -->|"λ very high<br/>news, forums, feeds"| T1["🔥 Minutes to hours<br/>~0.01% of corpus"]
+    CLASS -->|"λ high<br/>active blogs, listings"| T2["⚡ Daily<br/>~1% of corpus"]
+    CLASS -->|"λ moderate<br/>ordinary sites"| T3["📅 Weekly to monthly<br/>~20% of corpus"]
+    CLASS -->|"λ near zero<br/>archives, docs, PDFs"| T4["🧊 Quarterly or on demand<br/>~79% of corpus"]
+
+    T1 & T2 & T3 & T4 --> ADJ["Adjust by value:<br/>× PageRank<br/>× query demand<br/>× freshness sensitivity of topic"]
+
+    ADJ --> BUDGET{"Fits daily<br/>crawl budget?"}
+    BUDGET -->|"Yes"| SCHED["Schedule fetch"]
+    BUDGET -->|"No"| DEFER["Defer — lowest value first"]
+
+    SCHED --> RESULT{"Did content change?"}
+    RESULT -->|"Changed"| UP["λ ← increase<br/>crawl sooner next time"]
+    RESULT -->|"304 / identical"| DOWN["λ ← decrease<br/>back off, save budget"]
+    UP --> HIST
+    DOWN --> HIST
+
+    classDef hot fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef warm fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef cool fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef cold fill:#e0e7ff,stroke:#4338ca,color:#1c1917
+    class T1 hot
+    class T2 warm
+    class T3 cool
+    class T4 cold

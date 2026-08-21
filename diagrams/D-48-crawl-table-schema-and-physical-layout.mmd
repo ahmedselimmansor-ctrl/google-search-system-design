@@ -1,0 +1,33 @@
+flowchart TB
+    subgraph LOGICAL["Logical model — sparse multidimensional map"]
+        RK["Row key: REVERSED hostname + path<br/>com.example.www/products/item-42<br/><br/>⚠️ Reversal is the critical trick:<br/>all pages of one site sort together,<br/>so a site scan is a contiguous range read"]
+
+        RK --> CF1["Column family: contents<br/>contents:html @ t1, t2, t3<br/>(versioned — keeps crawl history)"]
+        RK --> CF2["Column family: metadata<br/>metadata:fetch_time<br/>metadata:http_status<br/>metadata:content_hash<br/>metadata:simhash<br/>metadata:language"]
+        RK --> CF3["Column family: anchor<br/>anchor:com.cnn.www = 'CNN homepage'<br/>anchor:com.bbc = 'see also'<br/>(one column per linking site —<br/>sparse, unbounded, no schema change)"]
+        RK --> CF4["Column family: signals<br/>signals:pagerank<br/>signals:spam_score<br/>signals:quality"]
+    end
+
+    subgraph PHYSICAL["Physical layout"]
+        T["Table sorted by row key"]
+        T --> TB1[("Tablet 1<br/>com.a… → com.f…")]
+        T --> TB2[("Tablet 2<br/>com.f… → com.m…")]
+        T --> TB3[("Tablet N<br/>…")]
+
+        TB1 --> TS["Tablet server owns tablet<br/>splits when too large,<br/>merges when too small"]
+        TS --> MEM["Memtable — sorted, in RAM<br/>absorbs all writes"]
+        TS --> WAL["Write-ahead log on DFS<br/>durability before ack"]
+        MEM -->|"flush"| SST1[("SSTable 1 — immutable")]
+        MEM -->|"flush"| SST2[("SSTable 2 — immutable")]
+        SST1 & SST2 -->|"compaction"| SST3[("Merged SSTable")]
+        SST3 --> DFS[("All SSTables live on the<br/>distributed file system —<br/>tablet servers hold NO durable state")]
+    end
+
+    LOGICAL --> PHYSICAL
+
+    classDef key fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef fam fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef phys fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class RK key
+    class CF1,CF2,CF3,CF4 fam
+    class TB1,TB2,TB3,SST1,SST2,SST3,DFS phys

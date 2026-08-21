@@ -1,0 +1,43 @@
+flowchart TB
+    RAW["Raw query string<br/>e.g. 'wether in cairo tommorow'"]
+
+    RAW --> SAN["Sanitize<br/>trim · Unicode NFC · strip control chars"]
+    SAN --> LANGD["Language & script detection<br/>+ user locale signals"]
+    LANGD --> NORMZ["Language-specific normalization<br/>see Chapter 05"]
+
+    NORMZ --> TOKQ["Tokenize<br/>same analyzer as index — critical!"]
+
+    TOKQ --> PARSE["Operator parsing<br/>quotes · site: · filetype: · -term · OR"]
+
+    PARSE --> SPELL{"Spelling"}
+    SPELL -->|"confident"| AUTOC["Auto-correct<br/>'wether' → 'weather'<br/>show 'showing results for…'"]
+    SPELL -->|"uncertain"| SUGG["Offer 'did you mean'<br/>serve original"]
+    SPELL -->|"clean"| PASS["Pass through"]
+
+    AUTOC & SUGG & PASS --> INTENT["Intent classification"]
+
+    INTENT --> I1["Navigational<br/>'facebook login'"]
+    INTENT --> I2["Informational<br/>'how does pagerank work'"]
+    INTENT --> I3["Transactional<br/>'buy usb-c cable'"]
+    INTENT --> I4["Local<br/>'coffee near me'"]
+    INTENT --> I5["Fresh / news<br/>'election results'"]
+
+    I1 & I2 & I3 & I4 & I5 --> EXPAND["Query expansion"]
+    EXPAND --> E1["Synonyms: 'car' ≈ 'automobile'"]
+    EXPAND --> E2["Stemming variants"]
+    EXPAND --> E3["Entity linking: 'cairo' → Cairo, Egypt"]
+    EXPAND --> E4["Implicit terms from context"]
+
+    E1 & E2 & E3 & E4 --> WEIGHT["Term weighting<br/>which terms are essential<br/>vs droppable"]
+
+    WEIGHT --> EMB["Dense query embedding<br/>for vector retrieval"]
+
+    WEIGHT --> PLAN["Structured query plan"]
+    EMB --> PLAN
+
+    PLAN --> OUT(("→ Cache lookup,<br/>then index fan-out"))
+
+    classDef stage fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef intent fill:#fde68a,stroke:#b45309,color:#1c1917
+    class SAN,LANGD,NORMZ,TOKQ,PARSE,EXPAND,WEIGHT,EMB stage
+    class I1,I2,I3,I4,I5 intent

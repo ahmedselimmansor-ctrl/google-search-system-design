@@ -1,0 +1,42 @@
+flowchart TB
+    BASE["Base ranking<br/>from L2 + L3"]
+
+    BASE --> CTX{"Apply context"}
+
+    CTX --> LOC["📍 Location"]
+    LOC --> L1["Country → corpus and locale bias"]
+    LOC --> L2["City → local intent results"]
+    LOC --> L3["⚠️ Legal: region-scoped removals"]
+
+    CTX --> LANG["🗣️ Language"]
+    LANG --> LG1["Interface language"]
+    LANG --> LG2["Content language preference"]
+    LANG --> LG3["Cross-lingual retrieval when<br/>the corpus is thin in-language"]
+
+    CTX --> TIME["🕐 Time"]
+    TIME --> T1["Freshness boost for news intent"]
+    TIME --> T2["Seasonality and recurring events"]
+    TIME --> T3["Breaking-event detection →<br/>temporarily raise recency weight"]
+
+    CTX --> DEV["📱 Device"]
+    DEV --> D1["Mobile-friendliness weighting"]
+    DEV --> D2["Result count and layout"]
+
+    CTX --> HIST["👤 Consented history"]
+    HIST --> H1["Session context:<br/>previous query disambiguates<br/>'jaguar' after 'zoo tickets'"]
+    HIST --> H2["Long-term interests<br/>— small weight, opt-out honoured"]
+
+    L1 & L2 & L3 & LG1 & LG2 & LG3 & T1 & T2 & T3 & D1 & D2 & H1 & H2 --> ADJ["Adjusted ranking"]
+
+    ADJ --> GUARD["Guardrails"]
+    GUARD --> G1["Cap personalization influence<br/>— it is a tiebreaker, not a re-ranker"]
+    GUARD --> G2["Preserve diversity<br/>avoid filter bubbles"]
+    GUARD --> G3["Never personalize away<br/>authoritative results on<br/>health, safety, civic topics"]
+    GUARD --> G4["Full opt-out must be honoured<br/>and must actually work"]
+
+    G1 & G2 & G3 & G4 --> FINAL(("Personalized SERP"))
+
+    classDef ctx fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef guard fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class LOC,LANG,TIME,DEV,HIST ctx
+    class GUARD,G1,G2,G3,G4 guard

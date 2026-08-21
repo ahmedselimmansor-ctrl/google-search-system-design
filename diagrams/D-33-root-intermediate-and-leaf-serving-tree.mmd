@@ -1,0 +1,40 @@
+flowchart TB
+    FE["Frontend<br/>1 RPC out"]
+    FE --> MIX["Mixer<br/>orchestrates verticals"]
+
+    MIX --> ROOT["Index Root<br/>~40 RPCs out"]
+
+    ROOT --> I1["Intermediate 1<br/>~40 RPCs out"]
+    ROOT --> I2["Intermediate 2"]
+    ROOT --> I3["Intermediate …"]
+    ROOT --> IN["Intermediate 40"]
+
+    I1 --> L1["Leaf 1<br/>shard 1"]
+    I1 --> L2["Leaf 2<br/>shard 2"]
+    I1 --> L3["Leaf …"]
+    I1 --> L40["Leaf 40<br/>shard 40"]
+
+    I2 --> M1["Leaf 41 …"]
+    I3 --> M2["Leaf … "]
+    IN --> M3["Leaf 1600"]
+
+    subgraph REPL["Each leaf is itself replicated"]
+        R1["Replica A"]
+        R2["Replica B"]
+        R3["Replica C"]
+    end
+
+    L1 -.-> REPL
+
+    subgraph FLOW["What flows back up"]
+        F1["Leaf → Intermediate: top-K docids + scores<br/>K ≈ 100, a few KB"]
+        F2["Intermediate → Root: merged top-K of its 40 leaves"]
+        F3["Root → Mixer: global top-K, ~1000 candidates"]
+    end
+
+    classDef top fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef mid fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef leaf fill:#fde68a,stroke:#b45309,color:#1c1917
+    class FE,MIX,ROOT top
+    class I1,I2,I3,IN mid
+    class L1,L2,L3,L40,M1,M2,M3 leaf

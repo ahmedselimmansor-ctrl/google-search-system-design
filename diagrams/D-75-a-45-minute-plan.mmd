@@ -1,0 +1,21 @@
+gantt
+    title Interview time allocation (units: minutes)
+    dateFormat X
+    axisFormat %s
+
+    section Scope
+    Clarify requirements and cut scope    :crit, a1, 0, 5
+    State assumptions out loud            :a2, 5, 7
+
+    section Estimate
+    Back-of-envelope capacity             :b1, 7, 13
+
+    section Design
+    High-level architecture (the 3 loops) :crit, c1, 13, 20
+    Crawling and the frontier             :c2, 20, 26
+    Indexing and sharding                 :crit, c3, 26, 33
+    Serving path and ranking cascade      :crit, c4, 33, 40
+
+    section Close
+    Bottlenecks, trade-offs, failure modes :d1, 40, 44
+    Questions for the interviewer          :d2, 44, 45

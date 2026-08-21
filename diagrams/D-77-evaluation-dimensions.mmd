@@ -1,0 +1,34 @@
+flowchart LR
+    subgraph WEAK["🔴 Weak signals"]
+        W1["Starts drawing before scoping"]
+        W2["No numbers, or numbers with<br/>no consequence attached"]
+        W3["Buzzwords without justification<br/>'we'll use Kafka and Redis'"]
+        W4["Cannot explain WHY sharding<br/>by document beats by term"]
+        W5["Ignores failure entirely"]
+        W6["Treats ranking as 'just BM25'"]
+        W7["Defensive when challenged"]
+    end
+
+    subgraph STRONG["🟢 Strong signals"]
+        S1["Scopes aggressively and says<br/>what is excluded"]
+        S2["Every number forces a decision"]
+        S3["Names trade-offs unprompted<br/>and the cost accepted"]
+        S4["Explains rejected alternatives"]
+        S5["Designs for failure from<br/>the start, not as an add-on"]
+        S6["Knows ranking is a cascade<br/>and why"]
+        S7["Updates the design gracefully<br/>when given new constraints"]
+        S8["Says 'I don't know' cleanly,<br/>then reasons from principles"]
+    end
+
+    WEAK --> LEVEL{"Signal"}
+    STRONG --> LEVEL
+
+    LEVEL --> L1["Junior: knows components"]
+    LEVEL --> L2["Mid: connects components correctly"]
+    LEVEL --> L3["Senior: justifies choices with constraints"]
+    LEVEL --> L4["Staff+: identifies which constraint<br/>dominates, and designs around it"]
+
+    classDef weak fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef strong fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class W1,W2,W3,W4,W5,W6,W7 weak
+    class S1,S2,S3,S4,S5,S6,S7,S8 strong

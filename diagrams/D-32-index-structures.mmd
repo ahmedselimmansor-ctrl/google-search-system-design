@@ -1,0 +1,98 @@
+classDiagram
+    class Lexicon {
+        +HashMap~term, TermMeta~ terms
+        +int64 total_docs
+        +lookup(term) TermMeta
+        +globalIDF(term) float
+    }
+
+    class TermMeta {
+        +int64 doc_frequency
+        +int64 total_term_frequency
+        +int64 postings_offset
+        +int32 postings_length
+        +float max_impact_score
+        +int32 num_blocks
+    }
+
+    class PostingList {
+        +int64 term_id
+        +PostingBlock[] blocks
+        +SkipList skips
+        +iterator() PostingIterator
+        +seek(docid) Posting
+        +blockMaxScore(i) float
+    }
+
+    class PostingBlock {
+        +int32 num_postings
+        +int8 bit_width
+        +bytes docid_deltas
+        +bytes frequencies
+        +bytes position_deltas
+        +float max_score
+        +decode() Posting[]
+    }
+
+    class Posting {
+        +int64 docid
+        +int16 term_frequency
+        +int16 field_mask
+        +int32[] positions
+    }
+
+    class ForwardIndex {
+        +getDocument(docid) DocAttachments
+        +getSnippetText(docid) string
+    }
+
+    class DocAttachments {
+        +int64 docid
+        +string url
+        +string title
+        +bytes compressed_text
+        +float pagerank
+        +float quality_score
+        +float spam_score
+        +string language
+        +int64 last_modified
+        +int8[] embedding
+        +bytes precomputed_features
+    }
+
+    class IndexSegment {
+        +string segment_id
+        +int32 tier
+        +int64 doc_count
+        +int64 created_at
+        +bool immutable
+        +Lexicon lexicon
+        +PostingList[] postings
+        +ForwardIndex forward
+        +BitSet tombstones
+    }
+
+    class Shard {
+        +int32 shard_id
+        +int64 docid_range_start
+        +int64 docid_range_end
+        +IndexSegment[] segments
+        +search(query, k) Candidate[]
+    }
+
+    class VectorIndex {
+        +int32 dimensions
+        +ANNGraph graph
+        +search(vector, k) Candidate[]
+    }
+
+    Lexicon "1" --> "*" TermMeta
+    TermMeta "1" --> "1" PostingList
+    PostingList "1" --> "*" PostingBlock
+    PostingBlock "1" --> "*" Posting
+    ForwardIndex "1" --> "*" DocAttachments
+    IndexSegment "1" --> "1" Lexicon
+    IndexSegment "1" --> "*" PostingList
+    IndexSegment "1" --> "1" ForwardIndex
+    Shard "1" --> "*" IndexSegment
+    Shard "1" --> "0..1" VectorIndex

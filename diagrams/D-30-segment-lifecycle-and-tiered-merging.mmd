@@ -1,0 +1,36 @@
+stateDiagram-v2
+    [*] --> InMemory: new/updated docs buffered
+
+    InMemory --> Flushed: buffer full or timer fires
+    note right of InMemory
+        Small in-RAM segment.
+        Searchable immediately —
+        this is what makes
+        near-real-time possible.
+    end note
+
+    Flushed --> L0: written as immutable segment
+    L0 --> L0: more flushes accumulate
+
+    L0 --> Merging: L0 segment count > threshold
+    Merging --> L1: merged, sorted, recompressed
+    L1 --> Merging2: L1 size > threshold
+    Merging2 --> L2: larger merged segment
+    L2 --> Merging3: periodic major merge
+    Merging3 --> L3: full compaction
+
+    L3 --> Published: passes validation gate
+    Published --> Serving: shipped to replicas
+    Serving --> Superseded: newer version published
+    Superseded --> Deleted: after rollback window expires
+    Deleted --> [*]
+
+    Serving --> Rollback: regression detected
+    Rollback --> Serving: previous version restored
+
+    note right of Merging3
+        Major merge also applies
+        deletions: docs marked
+        dead in a tombstone list
+        are physically dropped here.
+    end note

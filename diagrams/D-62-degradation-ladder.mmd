@@ -1,0 +1,53 @@
+stateDiagram-v2
+    [*] --> Full
+
+    Full: 🟢 FULL SERVICE
+    Full: All tiers · L3 neural ranking · all verticals
+    Full: fresh index · personalization · p99 < 300 ms
+
+    Full --> Reduced: latency budget pressure
+    Reduced: 🟡 REDUCED RANKING
+    Reduced: Skip L3 on some queries, serve L2 order
+    Reduced: Quality drops slightly, latency preserved
+
+    Reduced --> Narrowed: index tier under load
+    Narrowed: 🟠 NARROWED CORPUS
+    Narrowed: Tier 0 only, skip fallthrough to T1/T2
+    Narrowed: Head queries unaffected, tail queries worse
+
+    Narrowed --> Partial: shards unavailable
+    Partial: 🟠 PARTIAL COVERAGE
+    Partial: Serve from responding shards only
+    Partial: Response annotated with coverage %
+
+    Partial --> Core: heavy overload
+    Core: 🔴 CORE ONLY
+    Core: Web results only, no verticals
+    Core: No snippets beyond title, cached results preferred
+
+    Core --> Static: catastrophic
+    Static: ⚫ STATIC FALLBACK
+    Static: Serve last-known cached results
+    Static: Explicit "results may be outdated" notice
+
+    Static --> Core: capacity recovering
+    Core --> Partial: shards returning
+    Partial --> Narrowed: coverage restored
+    Narrowed --> Reduced: tiers available
+    Reduced --> Full: full capacity
+
+    note right of Full
+        Each step down is AUTOMATIC,
+        triggered by measured signals
+        (latency, error rate, queue depth),
+        not by a human decision.
+        Recovery is equally automatic
+        but deliberately slower, to avoid
+        oscillation.
+    end note
+
+    note right of Static
+        Even here the system returns
+        results — never an error page.
+        A stale answer beats no answer.
+    end note

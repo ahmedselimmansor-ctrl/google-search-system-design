@@ -1,0 +1,46 @@
+flowchart TB
+    Q["Incoming query"] --> T0
+
+    subgraph T0["🔥 Tier 0 — hot"]
+        T0D["10⁹ docs · 1% of corpus<br/>~6 TB · RAM-resident<br/>600 replicas<br/>full positions, all signals"]
+    end
+
+    T0 --> C0{"Enough high-quality<br/>candidates?<br/>count ≥ K and<br/>min score ≥ θ"}
+    C0 -->|"Yes ~85%"| DONE0["✅ Serve from Tier 0<br/>latency ~40 ms"]
+    C0 -->|"No"| T1
+
+    subgraph T1["⚡ Tier 1 — warm"]
+        T1D["10¹⁰ docs · 10% of corpus<br/>~60 TB · RAM + NVMe<br/>90 replicas<br/>full positions"]
+    end
+
+    T1 --> C1{"Enough now?"}
+    C1 -->|"Yes ~12%"| DONE1["✅ Serve from T0 + T1<br/>latency ~80 ms"]
+    C1 -->|"No"| T2
+
+    subgraph T2["🧊 Tier 2 — cold"]
+        T2D["8.9 × 10¹⁰ docs · 89%<br/>~534 TB · NVMe<br/>36 replicas<br/>positions pruned to save space"]
+    end
+
+    T2 --> DONE2["✅ Serve from all tiers<br/>latency ~200 ms<br/>rare, long-tail queries"]
+
+    subgraph ASSIGN["What decides a document's tier"]
+        A1["Query coverage — does it ever get retrieved?"]
+        A2["PageRank / authority"]
+        A3["Click-through history"]
+        A4["Freshness and change rate"]
+        A5["Quality and spam scores"]
+        A6["Language and locale demand"]
+    end
+
+    ASSIGN -.recomputed daily.-> T0D
+    ASSIGN -.-> T1D
+    ASSIGN -.-> T2D
+
+    classDef hot fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef warm fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef cold fill:#dbeafe,stroke:#1e40af,color:#1c1917
+    classDef ok fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class T0D hot
+    class T1D warm
+    class T2D cold
+    class DONE0,DONE1,DONE2 ok

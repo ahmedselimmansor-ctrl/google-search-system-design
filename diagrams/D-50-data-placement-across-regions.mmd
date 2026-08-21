@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph GLOBAL["Global — written once, read everywhere"]
+        G1[("Index segments<br/>immutable · pushed to every region")]
+        G2[("Lexicon and global term statistics")]
+        G3[("Ranking model artifacts")]
+    end
+
+    subgraph REGIONAL["Regional — one authoritative copy per region"]
+        R1[("Crawl database<br/>partitioned by host geography")]
+        R2[("Link graph")]
+        R3[("Raw content archive")]
+    end
+
+    subgraph STRONG["Globally consistent — small, transactional"]
+        S1[("Legal removals — region-scoped rules")]
+        S2[("Webmaster verification and settings")]
+        S3[("Shard assignment and live index version")]
+    end
+
+    subgraph LOCAL["Cell-local — regenerable, never replicated"]
+        L1[("Result caches")]
+        L2[("Snippet caches")]
+        L3[("In-memory index replicas")]
+    end
+
+    G1 --> DC1["🌎 Region: Americas"]
+    G1 --> DC2["🌍 Region: EMEA"]
+    G1 --> DC3["🌏 Region: APAC"]
+
+    S1 & S2 & S3 -.Paxos replicated.-> DC1 & DC2 & DC3
+    R1 --> DC1
+    DC1 & DC2 & DC3 --> L1
+
+    subgraph RULES["Placement rules"]
+        P1["Immutable + large → copy everywhere, cache forever"]
+        P2["Mutable + large → keep one authoritative regional copy"]
+        P3["Mutable + small + must be correct → consensus-replicate"]
+        P4["Regenerable → never replicate, just rebuild"]
+        P5["Regulated data → residency constraints override all of the above"]
+    end
+
+    classDef glob fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef reg fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef str fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef loc fill:#e5e7eb,stroke:#4b5563,color:#1c1917
+    class G1,G2,G3 glob
+    class R1,R2,R3 reg
+    class S1,S2,S3 str
+    class L1,L2,L3 loc

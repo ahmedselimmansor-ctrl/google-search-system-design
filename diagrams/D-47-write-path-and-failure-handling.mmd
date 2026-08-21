@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    participant CL as Client
+    participant M as Metadata Master
+    participant P as Primary Chunkserver
+    participant S1 as Replica 2
+    participant S2 as Replica 3
+
+    Note over CL,M: Metadata path — small, cached
+    CL->>M: append to /crawl/segment-4711
+    M->>M: allocate chunk, pick 3 replicas<br/>across distinct racks and power domains
+    M->>P: grant lease (primary for 60 s)
+    M-->>CL: chunk handle + replica locations
+    Note over CL,M: Client caches this —<br/>master is never in the data path
+
+    Note over CL,S2: Data path — bulk, master-free
+    CL->>P: push data (pipelined)
+    P->>S1: forward data
+    S1->>S2: forward data
+    Note over CL,S2: Linear pipeline uses full<br/>outbound bandwidth of every node
+
+    CL->>P: commit append
+    P->>P: assign serial order (offset)
+    P->>S1: apply at offset
+    P->>S2: apply at offset
+    S1-->>P: ack
+    S2-->>P: ack
+    P-->>CL: success + offset
+
+    alt A replica fails to ack
+        P-->>CL: partial failure
+        CL->>P: retry append
+        Note over CL,S2: Record may appear twice<br/>→ at-least-once semantics.<br/>Readers MUST dedupe by<br/>record checksum or id.
+    end
+
+    Note over M: Master continuously:<br/>heartbeats chunkservers,<br/>re-replicates under-replicated chunks,<br/>rebalances hot chunks

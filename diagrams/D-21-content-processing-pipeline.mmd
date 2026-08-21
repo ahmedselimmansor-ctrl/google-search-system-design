@@ -1,0 +1,50 @@
+flowchart TB
+    IN["Raw fetched bytes<br/>from content store"]
+
+    IN --> CT["Content-type & charset detection<br/>headers → BOM → heuristics"]
+    CT --> DEC["Decode to Unicode<br/>normalize to NFC"]
+
+    DEC --> ROUTE{"Media type?"}
+    ROUTE -->|"HTML"| HTML["HTML parser<br/>error-tolerant, spec-compliant"]
+    ROUTE -->|"PDF"| PDF["PDF text extraction"]
+    ROUTE -->|"Office / plain"| OFF["Format-specific extractors"]
+    ROUTE -->|"Image / video"| MED["Metadata + alt text +<br/>surrounding context only"]
+    ROUTE -->|"Unsupported"| SKIP["Record type, skip body"]
+
+    HTML --> DOM["DOM tree"]
+    DOM --> JS{"Requires JS<br/>rendering?"}
+    JS -->|"Yes"| REND["Headless render queue<br/>expensive — budgeted"]
+    JS -->|"No"| STRUCT
+    REND --> STRUCT["Structural analysis"]
+
+    STRUCT --> BOIL["Boilerplate removal<br/>nav · footer · ads · sidebars"]
+    STRUCT --> META["Metadata extraction<br/>title · description · og: · schema.org"]
+    STRUCT --> LINKS["Outlink extraction<br/>href + anchor text + rel"]
+    STRUCT --> FIELDS["Field segmentation<br/>title · h1-h6 · body · lists · tables"]
+
+    PDF & OFF & MED --> BOIL
+
+    BOIL --> LANG["Language identification<br/>per document and per block"]
+    LANG --> NORM["Language-specific normalization"]
+    NORM --> TOK["Tokenization<br/>+ stemming / lemmatization"]
+
+    TOK --> QUAL["Quality & safety classifiers<br/>spam · adult · thin content · readability"]
+    TOK --> DEDUP["SimHash & canonical clustering"]
+
+    LINKS --> LG[("Link graph store")]
+    QUAL --> DOCS[("Processed document store")]
+    DEDUP --> DOCS
+    META --> DOCS
+    FIELDS --> DOCS
+
+    DOCS --> OUT(("→ Index builder<br/>Chapter 06"))
+    LG --> OUT
+
+    classDef parse fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef text fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    classDef expensive fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class CT,DEC,HTML,PDF,OFF,MED,DOM,STRUCT parse
+    class BOIL,LANG,NORM,TOK,QUAL,DEDUP,META,FIELDS,LINKS text
+    class LG,DOCS store
+    class REND expensive

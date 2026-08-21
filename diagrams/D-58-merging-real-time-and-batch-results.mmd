@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    participant R as Root
+    participant L as Leaf server
+    participant B as Batch segments
+    participant RT as Real-time segments
+    participant M as Merge logic
+
+    R->>L: query, top-k
+    par Search both segment sets
+        L->>B: traverse batch postings<br/>(large, compressed, immutable)
+        L->>RT: traverse real-time postings<br/>(small, in RAM, recent)
+    end
+    B-->>L: candidates with full-precision signals
+    RT-->>L: candidates with approximate signals
+
+    L->>M: merge
+
+    M->>M: 1️⃣ Deduplicate by docid<br/>a doc may exist in BOTH —<br/>the real-time version is newer
+    Note over M: Rule — newest version wins.<br/>Batch segments carry a watermark<br/>timestamp, and RT entries older<br/>than it are discarded.
+
+    M->>M: 2️⃣ Reconcile score scales<br/>⚠️ approximate PageRank is not<br/>comparable to exact PageRank
+    Note over M: Fix: calibrate RT signals against<br/>batch distribution, or apply an<br/>explicit freshness prior instead of<br/>pretending the scores are equivalent.
+
+    M->>M: 3️⃣ Apply tombstones<br/>deletions from either source
+
+    M->>M: 4️⃣ Apply freshness boost<br/>only if the query has fresh intent
+
+    M-->>R: unified top-k + coverage flags
+
+    Note over L,RT: Compaction, continuously:<br/>real-time segments are folded<br/>into batch segments and dropped,<br/>keeping the RT set small enough<br/>to stay in RAM.

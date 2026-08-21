@@ -1,0 +1,33 @@
+stateDiagram-v2
+    [*] --> Discovered: link found / sitemap / feed
+
+    Discovered --> Scheduled: passes URL filters
+    Discovered --> Rejected: robots disallow, spam host, junk pattern
+
+    Scheduled --> Fetching: politeness budget available
+    Fetching --> Fetched: HTTP 200
+    Fetching --> Redirected: HTTP 3xx
+    Fetching --> TransientError: 5xx / timeout
+    Fetching --> Gone: 404 / 410
+
+    TransientError --> Scheduled: exponential backoff retry
+    Redirected --> Discovered: follow target URL
+
+    Fetched --> Parsed: extract text, links, metadata
+    Parsed --> Duplicate: near-dup of existing doc
+    Parsed --> Canonical: chosen as cluster representative
+
+    Duplicate --> Indexed: contributes signals only
+    Canonical --> Indexed: full posting entries written
+
+    Indexed --> Serving: shard published to serving tier
+    Serving --> Recrawl: change-rate model fires
+    Recrawl --> Fetching
+
+    Serving --> Demoted: spam / quality signal drop
+    Demoted --> Serving: signals recover
+    Demoted --> Removed: policy or legal removal
+
+    Gone --> Removed: after grace period
+    Removed --> [*]
+    Rejected --> [*]

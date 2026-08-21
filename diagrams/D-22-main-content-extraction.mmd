@@ -1,0 +1,28 @@
+flowchart TB
+    DOM["Parsed DOM tree"]
+
+    DOM --> B1["Signal 1 — Text density<br/>text chars ÷ tag count per block"]
+    DOM --> B2["Signal 2 — Link density<br/>anchor text ÷ total text<br/>high ⇒ navigation"]
+    DOM --> B3["Signal 3 — Structural role<br/>main · article · nav · footer · aside"]
+    DOM --> B4["Signal 4 — Cross-page templates<br/>blocks identical across the site"]
+    DOM --> B5["Signal 5 — Visual position<br/>from render, when available"]
+    DOM --> B6["Signal 6 — Repetition entropy<br/>low-entropy blocks are chrome"]
+
+    B1 & B2 & B3 & B4 & B5 & B6 --> CLS["Block classifier<br/>per DOM subtree"]
+
+    CLS --> MAIN["🟢 Main content<br/>full weight"]
+    CLS --> SUPP["🟡 Supplementary<br/>captions, tables — reduced weight"]
+    CLS --> CHROME["🔴 Boilerplate<br/>dropped from body index"]
+
+    MAIN --> FIELDS["Field-weighted representation"]
+    SUPP --> FIELDS
+    CHROME --> SITE["Retained as site-level template<br/>useful for site structure, not doc content"]
+
+    FIELDS --> W["Field weights at index time<br/>title ≫ h1 > h2-h6 > body > alt/caption"]
+
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef mid fill:#fef08a,stroke:#a16207,color:#1c1917
+    classDef drop fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class MAIN good
+    class SUPP mid
+    class CHROME drop

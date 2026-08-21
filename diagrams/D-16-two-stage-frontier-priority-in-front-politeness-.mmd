@@ -1,0 +1,26 @@
+flowchart LR
+    IN["Normalized,<br/>filtered URL"] --> SCORE["Priority scorer"]
+
+    SCORE --> F1[("Front queue 1<br/>highest priority")]
+    SCORE --> F2[("Front queue 2")]
+    SCORE --> F3[("Front queue …")]
+    SCORE --> FK[("Front queue K<br/>lowest priority")]
+
+    F1 & F2 & F3 & FK --> ROUTER{"Biased router<br/>samples high-priority<br/>queues more often"}
+
+    ROUTER --> H1[("Back queue A<br/>host: example.com")]
+    ROUTER --> H2[("Back queue B<br/>host: news.site")]
+    ROUTER --> H3[("Back queue C<br/>host: blog.org")]
+    ROUTER --> HN[("Back queue N<br/>one per active host")]
+
+    H1 & H2 & H3 & HN --> HEAP{{"Min-heap keyed by<br/>next-eligible-fetch-time"}}
+
+    HEAP --> POP["Pop earliest eligible<br/>host, fetch one URL"]
+    POP --> WORKER["Fetch worker"]
+    WORKER --> REINSERT["Reinsert host with<br/>t_next = now + delay"]
+    REINSERT --> HEAP
+
+    classDef fq fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef bq fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class F1,F2,F3,FK fq
+    class H1,H2,H3,HN bq

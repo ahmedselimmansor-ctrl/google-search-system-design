@@ -1,0 +1,39 @@
+flowchart TB
+    Q["Structured query + intent"] --> TRIG["Trigger evaluation<br/>one classifier per vertical"]
+
+    TRIG --> V1{"Web<br/>always on"}
+    TRIG --> V2{"Images?"}
+    TRIG --> V3{"News?"}
+    TRIG --> V4{"Video?"}
+    TRIG --> V5{"Local?"}
+    TRIG --> V6{"Shopping?"}
+    TRIG --> V7{"Direct answer?"}
+
+    V1 -->|"always"| RW["Web retrieval"]
+    V2 -->|"visual intent<br/>p > θ_img"| RI["Image retrieval"]
+    V3 -->|"fresh intent<br/>+ recent news exists"| RN["News retrieval"]
+    V4 -->|"video intent"| RV["Video retrieval"]
+    V5 -->|"geo intent<br/>+ location available"| RL["Local retrieval"]
+    V6 -->|"commercial intent"| RS["Product retrieval"]
+    V7 -->|"factual question<br/>+ high-confidence answer"| RA["Answer extraction"]
+
+    RW & RI & RN & RV & RL & RS & RA --> NORM["Score normalization<br/>⚠️ different verticals produce<br/>incomparable score scales"]
+
+    NORM --> ALLOC["Slot allocation<br/>predicted utility per vertical<br/>× position value"]
+
+    ALLOC --> LAYOUT["Layout assembly"]
+    LAYOUT --> POST["Post-processing"]
+
+    POST --> P1["Host diversity: max 2 results per domain"]
+    POST --> P2["Near-duplicate removal across verticals"]
+    POST --> P3["Safety filters: SafeSearch, policy"]
+    POST --> P4["Freshness boost if news triggered"]
+
+    P1 & P2 & P3 & P4 --> SERP(("Final SERP"))
+
+    classDef always fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef cond fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef risk fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class V1,RW always
+    class V2,V3,V4,V5,V6,V7 cond
+    class NORM risk

@@ -1,0 +1,54 @@
+flowchart TB
+    subgraph SEED["Seed & discovery sources"]
+        S1["Sitemaps"]
+        S2["RSS / Atom feeds"]
+        S3["Extracted outlinks"]
+        S4["Submitted URLs"]
+        S5["Redirect targets"]
+    end
+
+    subgraph FRONT["URL Frontier"]
+        NORM["URL Normalizer"]
+        FILT["URL Filters<br/>robots · patterns · budget"]
+        DUP["Seen-URL Filter<br/>Bloom + exact store"]
+        PRIO["Priority Scorer<br/>PageRank · change rate · demand"]
+        FQ[("Front queues<br/>priority 1..K")]
+        BQ[("Back queues<br/>one per host")]
+        HEAP["Politeness heap<br/>next-eligible-time"]
+    end
+
+    subgraph FETCH["Fetcher Fleet"]
+        DNS["DNS Resolver<br/>+ aggressive cache"]
+        ROB["robots.txt Cache<br/>TTL ~24h"]
+        FW["Fetch Workers<br/>async HTTP, 10³ per host"]
+        LIM["Per-host & per-IP<br/>rate limiters"]
+    end
+
+    subgraph POST["Post-fetch"]
+        STORE[("Raw Content Store<br/>Bigtable-like, versioned")]
+        PARSE["Parser<br/>links + text"]
+        DEDUP["Near-duplicate<br/>SimHash"]
+        SCHED["Recrawl Scheduler<br/>change-rate model"]
+    end
+
+    S1 & S2 & S3 & S4 & S5 --> NORM --> FILT --> DUP --> PRIO
+    PRIO --> FQ --> BQ --> HEAP --> FW
+    DNS --> FW
+    ROB --> FW
+    LIM --> FW
+    FW --> STORE --> PARSE
+    PARSE -->|"new outlinks"| NORM
+    PARSE --> DEDUP
+    STORE --> SCHED
+    SCHED -->|"recrawl due"| PRIO
+
+    classDef src fill:#e5e7eb,stroke:#4b5563,color:#1c1917
+    classDef front fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef fetch fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef post fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class S1,S2,S3,S4,S5 src
+    class NORM,FILT,DUP,PRIO front
+    class DNS,ROB,FW,LIM fetch
+    class PARSE,DEDUP,SCHED post
+    class FQ,BQ,HEAP,STORE store

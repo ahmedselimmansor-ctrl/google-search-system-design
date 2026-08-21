@@ -1,0 +1,32 @@
+flowchart TB
+    IN["Top-10 docids + query terms"]
+
+    IN --> FETCH["Fetch document text<br/>from forward index<br/>⚠️ 10 parallel reads —<br/>this is the doc-store hot path"]
+
+    FETCH --> SPLIT["Split into candidate passages<br/>sentences or sliding windows"]
+
+    SPLIT --> SCORE["Score each passage"]
+    SCORE --> S1["Query term coverage<br/>how many distinct terms appear"]
+    SCORE --> S2["Term proximity<br/>are they close together"]
+    SCORE --> S3["Position in document<br/>earlier is usually better"]
+    SCORE --> S4["Sentence completeness<br/>avoid mid-sentence cuts"]
+    SCORE --> S5["Readability and information density"]
+
+    S1 & S2 & S3 & S4 & S5 --> PICK["Select best 1–2 passages"]
+
+    PICK --> TRIM["Trim to display width<br/>~160 chars, respect word and<br/>grapheme-cluster boundaries"]
+    TRIM --> BOLD["Bold matched terms<br/>including morphological variants"]
+    BOLD --> SAFE["Escape HTML,<br/>strip bidi control characters"]
+
+    SAFE --> TITLE["Title selection<br/>title tag · h1 · anchor text ·<br/>whichever best matches intent"]
+
+    TITLE --> META{"Structured data<br/>available?"}
+    META -->|"Yes"| RICH["Rich result:<br/>ratings · price · dates · FAQ"]
+    META -->|"No"| PLAIN["Plain snippet"]
+
+    RICH & PLAIN --> OUT(("SERP item"))
+
+    classDef hot fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef proc fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class FETCH hot
+    class SPLIT,SCORE,PICK,TRIM,BOLD,SAFE proc

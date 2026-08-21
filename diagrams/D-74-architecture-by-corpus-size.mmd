@@ -1,0 +1,22 @@
+flowchart LR
+    S1["📄 10³–10⁵ docs<br/>Personal / small site"]
+    S1 --> A1["SQLite FTS or<br/>an in-process library.<br/>One machine.<br/>Rebuild the whole index<br/>on change."]
+
+    S2["📚 10⁵–10⁷ docs<br/>Enterprise / large site"]
+    S2 --> A2["Single-node Lucene-family<br/>engine, or a managed search<br/>service. Replicas for<br/>availability, not capacity.<br/>Near-real-time indexing<br/>works out of the box."]
+
+    S3["🏢 10⁷–10⁹ docs<br/>Large vertical search"]
+    S3 --> A3["Sharded cluster, document<br/>partitioning, hybrid retrieval,<br/>a learned ranking model,<br/>a real result cache.<br/>The architecture in this repo<br/>starts to apply here."]
+
+    S4["🌍 10⁹–10¹¹ docs<br/>Web scale"]
+    S4 --> A4["Everything in this repository:<br/>tiering, cascaded ranking,<br/>incremental indexing, cells,<br/>hedged requests, spam defence,<br/>custom storage infrastructure."]
+
+    A1 --> N1["Complexity you do NOT need:<br/>sharding, tiering, cascades,<br/>cells, hedging"]
+    A4 --> N2["Complexity you cannot avoid:<br/>all of it — each piece was<br/>forced by a specific constraint"]
+
+    classDef small fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef mid fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef large fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class S1,A1,N1 small
+    class S2,A2,S3,A3 mid
+    class S4,A4,N2 large

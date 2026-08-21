@@ -1,0 +1,57 @@
+flowchart TB
+    subgraph APP["Application layer"]
+        A1["Crawler"]
+        A2["Content processor"]
+        A3["Index builder"]
+        A4["Serving tier"]
+        A5["Control plane"]
+    end
+
+    subgraph COMPUTE["Compute frameworks"]
+        C1["Batch: MapReduce-style"]
+        C2["Streaming: incremental processors"]
+        C3["Graph: PageRank engine"]
+    end
+
+    subgraph STRUCTURED["Structured storage"]
+        B["Wide-column store — Bigtable-class<br/>row key → column families → versioned cells<br/>sorted by row key · range-partitioned into tablets<br/>LSM: memtable + SSTables + compaction"]
+        SP["Globally consistent DB — Spanner-class<br/>Paxos groups · synchronized clocks<br/>externally consistent transactions"]
+    end
+
+    subgraph COORD["Coordination"]
+        CH["Lock service — Chubby-class<br/>Paxos-replicated<br/>leader election · config · naming<br/>small files, high read volume"]
+    end
+
+    subgraph FS["Distributed file system"]
+        G["GFS / Colossus-class<br/>append-optimized · chunked<br/>metadata master + chunkservers<br/>replication or Reed-Solomon erasure coding"]
+    end
+
+    subgraph HW["Physical"]
+        H1["Commodity servers with local disks"]
+        H2["Clos datacenter fabric"]
+        H3["Cluster scheduler — Borg-class"]
+    end
+
+    A1 & A2 --> B
+    A3 --> C1 & C3
+    C1 & C2 & C3 --> B
+    C1 --> G
+    A3 --> G
+    A4 --> G
+    A5 --> CH & SP
+    A4 --> CH
+
+    B --> G
+    SP --> G
+    CH --> HW
+    G --> HW
+    COMPUTE --> H3
+
+    classDef app fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef struct fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef coord fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef fs fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class A1,A2,A3,A4,A5 app
+    class B,SP struct
+    class CH,SP coord
+    class G fs

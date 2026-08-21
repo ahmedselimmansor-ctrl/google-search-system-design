@@ -1,0 +1,34 @@
+stateDiagram-v2
+    [*] --> Unknown
+
+    Unknown --> FetchingRobots: first URL for this host
+    FetchingRobots --> RobotsOK: 200, parsed
+    FetchingRobots --> RobotsMissing: 404 — allow all
+    FetchingRobots --> RobotsDenyAll: 5xx or timeout — assume disallow
+    FetchingRobots --> RobotsDenyAll: explicit Disallow /
+
+    RobotsOK --> Idle: crawl-delay recorded
+    RobotsMissing --> Idle: use default delay
+    RobotsDenyAll --> Blocked
+
+    Idle --> Eligible: now >= next_fetch_time
+    Eligible --> Fetching: worker acquires host lease
+    Fetching --> Idle: success — next_fetch_time = now + delay
+
+    Fetching --> Backoff: 429 or 503
+    Fetching --> Backoff: latency above threshold
+    Backoff --> Idle: delay doubled, capped
+    Backoff --> Throttled: repeated pressure
+    Throttled --> Idle: after long cooldown
+
+    Idle --> RefreshRobots: robots TTL expired
+    RefreshRobots --> FetchingRobots
+
+    Blocked --> FetchingRobots: retry robots after 24h
+    Blocked --> [*]: permanent opt-out
+
+    note right of Backoff
+        Adaptive politeness:
+        the host's own latency and
+        error rate set our rate.
+    end note

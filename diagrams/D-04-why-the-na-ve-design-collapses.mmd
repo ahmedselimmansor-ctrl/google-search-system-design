@@ -1,0 +1,22 @@
+flowchart TB
+    NAIVE["Naïve design<br/>SQL table + full scan"]
+
+    NAIVE --> F1["❌ Scan cost<br/>100 B docs × 10 KB = 1 PB<br/>read per query"]
+    NAIVE --> F2["❌ Single machine<br/>corpus is 10,000× larger<br/>than any one host"]
+    NAIVE --> F3["❌ No notion of 'useful'<br/>substring match ≠ relevance"]
+    NAIVE --> F4["❌ Write throughput<br/>10⁹ page updates/day<br/>vs B-tree write amplification"]
+
+    F1 --> S1["✅ Invert the data<br/>term → document list"]
+    F2 --> S2["✅ Shard by document<br/>across thousands of hosts"]
+    F3 --> S3["✅ Learn a ranking function<br/>from behavioural signals"]
+    F4 --> S4["✅ Append-only + batch merge<br/>LSM, not B-tree"]
+
+    S1 --> WIN(("Feasible<br/>architecture"))
+    S2 --> WIN
+    S3 --> WIN
+    S4 --> WIN
+
+    classDef bad fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class F1,F2,F3,F4 bad
+    class S1,S2,S3,S4 good

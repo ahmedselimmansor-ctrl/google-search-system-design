@@ -1,0 +1,33 @@
+flowchart TB
+    U(("👤 User"))
+
+    U --> L1["① Browser cache<br/>key: full URL<br/>TTL: seconds–minutes<br/>saves: entire round trip"]
+    L1 -->|"miss"| L2["② Edge / CDN cache<br/>static assets, JS, CSS, logos<br/>NOT personalized results<br/>saves: origin round trip"]
+
+    L2 -->|"miss"| L3["③ Result cache (SERP cache)<br/>key: normalized_query + locale +<br/>country + safesearch + device_class<br/>value: full ranked result set<br/>TTL: 5 min – 24 h by intent<br/>hit rate ~40% · THE BIG ONE"]
+
+    L3 -->|"miss"| L4["④ Query-understanding cache<br/>key: raw query string<br/>value: spelling, intent, expansion, embedding<br/>TTL: hours<br/>hit rate ~60% — cheap and very effective"]
+
+    L4 --> L5["⑤ Posting-list cache<br/>key: term id<br/>value: decompressed hot posting blocks<br/>on the leaf server, LFU<br/>hit rate ~85% for common terms"]
+
+    L5 --> L6["⑥ Document / snippet cache<br/>key: docid + query-term set<br/>value: rendered snippet, title, metadata<br/>protects the doc store from<br/>the read amplification in Ch 07"]
+
+    L6 --> IDX[("Index + document store")]
+
+    subgraph TTL["TTL by query intent"]
+        T1["Navigational 'facebook' → 24 h<br/>answer essentially never changes"]
+        T2["Informational → 1–6 h"]
+        T3["Local → 1 h<br/>hours and availability change"]
+        T4["News / fresh → 1–5 min"]
+        T5["Trending / breaking → 30 s or bypass"]
+        T6["Personalized → not cached globally"]
+    end
+
+    L3 -.governed by.-> TTL
+
+    classDef client fill:#e5e7eb,stroke:#4b5563,color:#1c1917
+    classDef big fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef server fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    class L1,L2 client
+    class L3,L4 big
+    class L5,L6 server

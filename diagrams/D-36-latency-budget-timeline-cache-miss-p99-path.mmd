@@ -1,0 +1,31 @@
+gantt
+    title Query latency budget — cache miss (units: milliseconds)
+    dateFormat X
+    axisFormat %s
+
+    section Network
+    Client to edge (TLS resumed)      :net1, 0, 20
+    Edge to serving cell              :net2, 20, 25
+
+    section Frontend
+    Request setup and routing         :fe1, 25, 33
+    Query understanding               :qu1, 33, 53
+    Cache lookup (miss)               :ca1, 53, 55
+
+    section Retrieval
+    Root to intermediate to leaf      :rt1, 55, 58
+    Leaf WAND traversal and L1 score  :lf1, 58, 98
+    Merge up the tree                 :mg1, 98, 105
+
+    section Ranking
+    L2 rescore 1000 to 100            :l2, 105, 135
+    L3 neural rerank 100 to 10        :l3, 135, 185
+
+    section Assembly
+    Doc store fetch (parallel)        :ds1, 185, 205
+    Snippet generation                :sn1, 205, 215
+    Blend, dedupe, serialize          :bl1, 215, 230
+
+    section Return
+    Response to client                :ret, 230, 250
+    Tail headroom to p99 SLO          :crit, head, 250, 300

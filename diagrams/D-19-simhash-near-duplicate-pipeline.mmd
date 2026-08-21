@@ -1,0 +1,35 @@
+flowchart TB
+    DOC["Document text"] --> SHING["Shingling<br/>overlapping k-grams, k≈5"]
+    SHING --> WEIGHT["Weight each shingle<br/>e.g. by IDF"]
+    WEIGHT --> HASH["Hash each shingle<br/>to 64 bits"]
+
+    HASH --> VEC["Accumulate signed vector<br/>bit set → +w, bit clear → −w"]
+    VEC --> SIGN["Take sign of each of 64 dimensions"]
+    SIGN --> FP["64-bit SimHash fingerprint"]
+
+    FP --> IDX{"Hamming distance ≤ 3<br/>to any existing fingerprint?"}
+
+    IDX -->|"No"| NEW["New content cluster<br/>this doc is canonical"]
+    IDX -->|"Yes"| CLUSTER["Join existing cluster"]
+
+    CLUSTER --> PICK["Pick cluster representative<br/>highest PageRank ·<br/>shortest URL ·<br/>rel=canonical hint ·<br/>earliest seen"]
+    PICK --> CANON["Canonical → full index entry"]
+    PICK --> DUPE["Non-canonical → signals only<br/>anchors and links still merged in"]
+
+    NEW --> CANON
+
+    subgraph LOOKUP["Sublinear lookup trick"]
+        L1["Permute the 64 bits into<br/>p tables, each sorted by<br/>a different bit-prefix"]
+        L2["A pair within Hamming distance 3<br/>must agree exactly on at least one<br/>prefix block"]
+        L3["→ probe p sorted tables<br/>instead of 10¹¹ comparisons"]
+        L1 --> L2 --> L3
+    end
+
+    IDX -.uses.-> LOOKUP
+
+    classDef proc fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef dup fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    class SHING,WEIGHT,HASH,VEC,SIGN proc
+    class CANON,NEW good
+    class DUPE,CLUSTER dup

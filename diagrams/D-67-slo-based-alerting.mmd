@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph GOOD["✅ Alert on these — user-visible symptoms"]
+        A1["SLO burn rate<br/>'error budget will exhaust in 4 h'"]
+        A2["p99 latency above SLO<br/>sustained over a window"]
+        A3["Result-quality score drop<br/>on golden queries"]
+        A4["Index coverage below threshold"]
+        A5["Index freshness stalled<br/>— age distribution shifting"]
+        A6["🚨 Politeness violations > 0<br/>— a trust breach, page immediately"]
+    end
+
+    subgraph BAD["⚠️ Do NOT page on these — causes, not symptoms"]
+        B1["Single machine down<br/>→ expected, handled automatically"]
+        B2["CPU above 80%<br/>→ that is called utilization"]
+        B3["A cache miss occurred"]
+        B4["One leaf slow<br/>→ hedging exists for exactly this"]
+        B5["Disk 70% full<br/>→ ticket, not a page"]
+    end
+
+    A1 & A2 & A3 & A4 & A5 & A6 --> PAGE["📟 Page on-call"]
+    B1 & B2 & B3 & B4 & B5 --> DASH["📊 Dashboard / ticket only"]
+
+    PAGE --> RB["Runbook<br/>every alert links to one"]
+    RB --> ACT{"Actionable?"}
+    ACT -->|"No"| DELETE["🗑️ Delete the alert.<br/>An unactionable page is<br/>pure alert fatigue."]
+    ACT -->|"Yes"| RESP["Respond, mitigate, then<br/>investigate root cause"]
+
+    RESP --> PM["Blameless postmortem"]
+    PM --> FIX["System change so the same<br/>failure cannot recur"]
+    FIX --> GOOD
+
+    subgraph BURN["Multi-window burn-rate alerting"]
+        W1["Fast burn: 2% of budget in 1 h<br/>→ page immediately"]
+        W2["Slow burn: 10% of budget in 6 h<br/>→ ticket, investigate today"]
+        W3["Two windows together suppress<br/>both false pages and slow leaks"]
+    end
+
+    A1 -.implemented as.-> BURN
+
+    classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef bad fill:#fed7aa,stroke:#c2410c,color:#1c1917
+    classDef crit fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class A1,A2,A3,A4,A5 good
+    class B1,B2,B3,B4,B5 bad
+    class A6,DELETE crit

@@ -1,0 +1,111 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  mermaid:
+    name: Mermaid diagrams parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Validate standalone .mmd diagrams
+        run: |
+          mkdir -p /tmp/render
+          fail=0
+          for f in diagrams/*.mmd; do
+            if ! mmdc -i "$f" -o "/tmp/render/$(basename "${f%.mmd}").svg" \
+                      -p .github/puppeteer-config.json -q 2>/tmp/err.log; then
+              echo "::error file=$f::Mermaid parse error"
+              sed 's/^/    /' /tmp/err.log
+              fail=1
+            fi
+          done
+          echo "Checked $(ls diagrams/*.mmd | wc -l) standalone diagrams."
+          exit $fail
+
+      - name: Validate diagrams embedded in Markdown
+        run: |
+          fail=0
+          for f in README.md README.ar.md docs/en/*.md docs/ar/*.md; do
+            grep -q '^```mermaid$' "$f" || continue
+            if ! mmdc -i "$f" -o "/tmp/render/$(basename "$f")" \
+                      -p .github/puppeteer-config.json -q 2>/tmp/err.log; then
+              echo "::error file=$f::Mermaid parse error in an embedded diagram"
+              sed 's/^/    /' /tmp/err.log
+              fail=1
+            fi
+          done
+          exit $fail
+
+  links:
+    name: Internal links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check relative Markdown links
+        shell: bash
+        run: |
+          fail=0
+          checked=0
+          while IFS= read -r file; do
+            while IFS= read -r href; do
+              case "$href" in
+                http*|mailto:*|'#'*|'') continue ;;
+              esac
+              target="$(dirname "$file")/${href%%#*}"
+              [ -z "${href%%#*}" ] && continue
+              checked=$((checked+1))
+              if [ ! -e "$target" ]; then
+                echo "::error file=$file::Broken link -> $href"
+                fail=1
+              fi
+            done < <(grep -oE '\]\([^)]+\)' "$file" | sed -E 's/^\]\(//; s/\)$//')
+          done < <(find . -name '*.md' -not -path './.git/*')
+          echo "Checked $checked relative links."
+          exit $fail
+
+  parity:
+    name: EN and AR stay in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare diagram IDs and counts across languages
+        shell: bash
+        run: |
+          fail=0
+          for en in docs/en/*.md; do
+            ar="docs/ar/$(basename "$en")"
+            if [ ! -f "$ar" ]; then
+              echo "::error file=$en::Missing Arabic counterpart $ar"
+              fail=1; continue
+            fi
+            en_ids=$(grep -oE '\*\*Diagram (D-[0-9]+)' "$en" | grep -oE 'D-[0-9]+' | tr '\n' ' ')
+            ar_ids=$(grep -oE '\*\*المخطط (D-[0-9]+)' "$ar" | grep -oE 'D-[0-9]+' | tr '\n' ' ')
+            if [ "$en_ids" != "$ar_ids" ]; then
+              echo "::error file=$ar::Diagram IDs differ from $en"
+              echo "    EN: $en_ids"
+              echo "    AR: $ar_ids"
+              fail=1
+            fi
+            en_n=$(grep -c '^```mermaid$' "$en" || true)
+            ar_n=$(grep -c '^```mermaid$' "$ar" || true)
+            if [ "$en_n" != "$ar_n" ]; then
+              echo "::error file=$ar::Mermaid block count $ar_n does not match $en ($en_n)"
+              fail=1
+            fi
+          done
+          exit $fail

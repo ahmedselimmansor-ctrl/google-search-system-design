@@ -1,0 +1,57 @@
+flowchart TB
+    WEB["Web"] -->|"crawled by"| CRAWLER["Crawler"]
+    CRAWLER -->|"ordered by"| FRONTIER["URL Frontier"]
+    FRONTIER -->|"constrained by"| POLITENESS["Politeness"]
+    CRAWLER -->|"produces"| RAW["Raw documents"]
+
+    RAW -->|"parsed into"| TOKENS["Tokens"]
+    RAW -->|"yields"| LINKGRAPH["Link graph"]
+    RAW -->|"fingerprinted by"| SIMHASH["SimHash"]
+    SIMHASH -->|"groups into"| CANON["Canonical clusters"]
+
+    LINKGRAPH -->|"computes"| PAGERANK["PageRank"]
+    LINKGRAPH -->|"provides"| ANCHOR["Anchor text"]
+    LINKGRAPH -->|"detects"| SPAM["Link spam"]
+
+    TOKENS -->|"inverted into"| POSTINGS["Posting lists"]
+    POSTINGS -->|"compressed by"| DELTA["Delta + PForDelta"]
+    POSTINGS -->|"pruned by"| WAND["BlockMax-WAND"]
+    POSTINGS -->|"grouped into"| SEGMENT["Immutable segments"]
+    SEGMENT -->|"assembled into"| SHARD["Shards"]
+    SHARD -->|"organized into"| TIERS["Hot / warm / cold tiers"]
+
+    QUERY["Query"] -->|"processed by"| QU["Query understanding"]
+    QU -->|"checks"| CACHE["Result cache"]
+    QU -->|"fans out to"| SHARD
+
+    SHARD -->|"returns"| CAND["Candidates"]
+    CAND -->|"scored by"| L1["L1 · BM25 + static"]
+    L1 --> L2["L2 · Gradient-boosted trees"]
+    L2 --> L3["L3 · Cross-encoder"]
+
+    PAGERANK -.feature for.-> L1
+    ANCHOR -.feature for.-> L1
+    SPAM -.demotes in.-> L2
+
+    TOKENS -->|"embedded as"| VECTORS["Dense vectors"]
+    VECTORS -->|"searched by"| ANN["ANN index"]
+    ANN -->|"fused with"| CAND
+
+    L3 -->|"diversified into"| SERP["SERP"]
+    SERP -->|"generates"| LOGS["Click logs"]
+    LOGS -.trains.-> L2
+    LOGS -.trains.-> L3
+    LOGS -.prioritizes.-> FRONTIER
+
+    SEGMENT -->|"stored on"| DFS["Distributed file system"]
+    RAW -->|"stored in"| WCS["Wide-column store"]
+    SHARD -->|"assigned via"| COORD["Coordination service"]
+
+    classDef crawl fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef index fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef serve fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    class CRAWLER,FRONTIER,POLITENESS,RAW crawl
+    class POSTINGS,DELTA,WAND,SEGMENT,SHARD,TIERS,TOKENS index
+    class QUERY,QU,CACHE,CAND,L1,L2,L3,SERP serve
+    class DFS,WCS,COORD store

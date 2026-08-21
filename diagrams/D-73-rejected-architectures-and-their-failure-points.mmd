@@ -1,0 +1,47 @@
+flowchart TB
+    subgraph ALT1["❌ Alternative A — Relational database"]
+        A1["Store pages in a RDBMS,<br/>use full-text search extensions"]
+        A2["Fails at: 10¹¹ rows, PB-scale text,<br/>10⁹ writes/day, and full-text<br/>extensions are not designed<br/>for web-scale ranking"]
+        A3["Would work for: 10⁶–10⁷ documents<br/>— an enterprise or site search"]
+        A1 --> A2 --> A3
+    end
+
+    subgraph ALT2["❌ Alternative B — Pure vector database"]
+        B1["Embed everything, ANN search only,<br/>no inverted index"]
+        B2["Fails at: exact identifiers, rare<br/>proper nouns, negation, and freshness<br/>— new entities are absent from the<br/>embedding model until it is retrained"]
+        B3["Would work for: semantic search over<br/>a curated, slow-changing corpus"]
+        B1 --> B2 --> B3
+    end
+
+    subgraph ALT3["❌ Alternative C — Term-partitioned index"]
+        C1["Shard by term so each query<br/>touches only a few servers"]
+        C2["Fails at: Zipf distribution creates<br/>permanent hot spots, and intersecting<br/>lists across the network moves<br/>gigabytes per query"]
+        C3["Would work for: never, at web scale"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph ALT4["❌ Alternative D — Single global cluster"]
+        D1["One enormous datacenter,<br/>no geographic replication"]
+        D2["Fails at: physics —<br/>150 ms cross-continent RTT<br/>against a 300 ms p99 SLO,<br/>plus a single point of failure"]
+        D3["Would work for: a single-region product"]
+        D1 --> D2 --> D3
+    end
+
+    subgraph ALT5["❌ Alternative E — Rebuild the index on every change"]
+        E1["Run the full MapReduce build<br/>whenever anything changes"]
+        E2["Fails at: 10⁵× write amplification —<br/>recomputing 10¹¹ documents to<br/>reflect 10⁶ changes"]
+        E3["Would work for: a corpus that<br/>changes in scheduled batches"]
+        E1 --> E2 --> E3
+    end
+
+    subgraph ALT6["❌ Alternative F — Per-user index"]
+        F1["Fully personalized retrieval:<br/>every user gets their own ranking<br/>computed from scratch"]
+        F2["Fails at: cache hit rate → 0,<br/>multiplying serving cost by ~2×,<br/>with severe privacy exposure"]
+        F3["Would work for: a small, high-value<br/>user base — enterprise search"]
+        F1 --> F2 --> F3
+    end
+
+    classDef bad fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    classDef ok fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    class A2,B2,C2,D2,E2,F2 bad
+    class A3,B3,D3,E3,F3 ok

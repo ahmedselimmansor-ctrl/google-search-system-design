@@ -1,0 +1,40 @@
+flowchart LR
+    subgraph PUSH["📤 PUSH — publisher-initiated · seconds"]
+        P1["Indexing API submission<br/>latency: seconds<br/>⚠️ requires site verification,<br/>strict quotas, abuse-prone"]
+        P2["Sitemap ping on update<br/>latency: seconds–minutes"]
+        P3["PubSubHubbub / WebSub<br/>real-time feed push"]
+        P4["RSS / Atom polling<br/>latency: minutes"]
+    end
+
+    subgraph SIGNAL["📡 SIGNAL-DRIVEN · minutes"]
+        S1["Query demand spike:<br/>many users searching a term<br/>with no good results<br/>→ targeted crawl"]
+        S2["Social / external mention<br/>volume spike"]
+        S3["A high-authority page<br/>links to something new"]
+    end
+
+    subgraph PULL["📥 PULL — crawler-initiated · minutes–weeks"]
+        L1["High-frequency recrawl<br/>of known hot pages<br/>latency: minutes"]
+        L2["Sitemap periodic re-read<br/>latency: hours"]
+        L3["Normal scheduled recrawl<br/>latency: days–weeks"]
+        L4["Link discovery from<br/>other crawled pages<br/>latency: unbounded"]
+    end
+
+    P1 & P2 & P3 & P4 --> VERIFY["Verification layer<br/>⚠️ push channels are attacker-controlled"]
+    S1 & S2 & S3 --> VERIFY
+    L1 & L2 & L3 & L4 --> VERIFY
+
+    VERIFY --> V1["Confirm site ownership"]
+    VERIFY --> V2["Enforce per-site quotas"]
+    VERIFY --> V3["Fetch and verify the content<br/>actually changed — never trust<br/>the claim alone"]
+    VERIFY --> V4["Apply spam and quality scoring<br/>BEFORE fast-track admission"]
+
+    V1 & V2 & V3 & V4 --> FT["Fast-track queue"]
+
+    classDef push fill:#bbf7d0,stroke:#15803d,color:#1c1917
+    classDef sig fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef pull fill:#dbeafe,stroke:#1e40af,color:#1c1917
+    classDef sec fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class P1,P2,P3,P4 push
+    class S1,S2,S3 sig
+    class L1,L2,L3,L4 pull
+    class VERIFY,V1,V2,V3,V4 sec

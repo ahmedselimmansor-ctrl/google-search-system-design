@@ -1,0 +1,57 @@
+flowchart TB
+    SRC[("Processed documents<br/>from Chapter 05")]
+    LINKS[("Link graph")]
+
+    subgraph OFFLINE["Offline signal computation"]
+        PR["PageRank<br/>~30 iterations over 10¹² edges"]
+        ANC["Anchor text aggregation<br/>group inlinks by target"]
+        QS["Quality & spam scores"]
+        EMB["Embedding generation<br/>doc → dense vector"]
+    end
+
+    LINKS --> PR
+    LINKS --> ANC
+    SRC --> QS
+    SRC --> EMB
+
+    subgraph MAP["MAP phase"]
+        M1["For each document:<br/>emit ⟨term, docid, tf, fields, positions⟩<br/>for every token"]
+        M2["Attach precomputed<br/>per-doc signals"]
+    end
+
+    SRC --> M1
+    PR & ANC & QS --> M2
+    M1 --> M2
+
+    M2 --> SHUF["SHUFFLE<br/>partition by hash(term)<br/>sort by ⟨term, docid⟩<br/>— the expensive step:<br/>10¹⁴ records across the network"]
+
+    subgraph RED["REDUCE phase"]
+        R1["Group all postings for one term"]
+        R2["Delta-encode + compress"]
+        R3["Build skip pointers<br/>and block max-scores"]
+        R4["Emit immutable index segment"]
+    end
+
+    SHUF --> R1 --> R2 --> R3 --> R4
+
+    R4 --> SEG[("Immutable index segments<br/>on distributed file system")]
+    EMB --> VEC[("Vector index<br/>ANN graph / IVF-PQ")]
+
+    SEG --> ASSIGN["Shard assembler<br/>group segments into shards<br/>assign shards to tiers"]
+    VEC --> ASSIGN
+
+    ASSIGN --> PUB{"Publish"}
+    PUB --> VALID["Validation gate<br/>golden-query regression suite<br/>size and count sanity checks"]
+    VALID -->|"Pass"| SHIP["Ship to serving replicas<br/>staged, region by region"]
+    VALID -->|"Fail"| HALT["🛑 Halt publish<br/>keep serving previous version"]
+
+    SHIP --> LIVE(("Live serving tier"))
+
+    classDef off fill:#fde68a,stroke:#b45309,color:#1c1917
+    classDef mr fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
+    classDef store fill:#e9d5ff,stroke:#7e22ce,color:#1c1917
+    classDef gate fill:#fecaca,stroke:#b91c1c,color:#1c1917
+    class PR,ANC,QS,EMB off
+    class M1,M2,SHUF,R1,R2,R3,R4 mr
+    class SEG,VEC store
+    class VALID,HALT gate
