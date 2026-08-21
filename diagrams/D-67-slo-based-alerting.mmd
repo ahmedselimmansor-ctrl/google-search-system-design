@@ -1,14 +1,14 @@
 flowchart TB
-    subgraph GOOD["✅ Alert on these — user-visible symptoms"]
+    subgraph GOOD["✅ Alert on these: user-visible symptoms"]
         A1["SLO burn rate<br/>'error budget will exhaust in 4 h'"]
         A2["p99 latency above SLO<br/>sustained over a window"]
         A3["Result-quality score drop<br/>on golden queries"]
         A4["Index coverage below threshold"]
-        A5["Index freshness stalled<br/>— age distribution shifting"]
-        A6["🚨 Politeness violations > 0<br/>— a trust breach, page immediately"]
+        A5["Index freshness stalled<br/>age distribution shifting"]
+        A6["🚨 Politeness violations > 0<br/>a trust breach, page immediately"]
     end
 
-    subgraph BAD["⚠️ Do NOT page on these — causes, not symptoms"]
+    subgraph BAD["⚠️ Do NOT page on these: causes, not symptoms"]
         B1["Single machine down<br/>→ expected, handled automatically"]
         B2["CPU above 80%<br/>→ that is called utilization"]
         B3["A cache miss occurred"]

@@ -1,23 +1,23 @@
 flowchart TB
-    subgraph GLOBAL["Global — written once, read everywhere"]
+    subgraph GLOBAL["Global: written once, read everywhere"]
         G1[("Index segments<br/>immutable · pushed to every region")]
         G2[("Lexicon and global term statistics")]
         G3[("Ranking model artifacts")]
     end
 
-    subgraph REGIONAL["Regional — one authoritative copy per region"]
+    subgraph REGIONAL["Regional: one authoritative copy per region"]
         R1[("Crawl database<br/>partitioned by host geography")]
         R2[("Link graph")]
         R3[("Raw content archive")]
     end
 
-    subgraph STRONG["Globally consistent — small, transactional"]
-        S1[("Legal removals — region-scoped rules")]
+    subgraph STRONG["Globally consistent: small, transactional"]
+        S1[("Legal removals: region-scoped rules")]
         S2[("Webmaster verification and settings")]
         S3[("Shard assignment and live index version")]
     end
 
-    subgraph LOCAL["Cell-local — regenerable, never replicated"]
+    subgraph LOCAL["Cell-local: regenerable, never replicated"]
         L1[("Result caches")]
         L2[("Snippet caches")]
         L3[("In-memory index replicas")]

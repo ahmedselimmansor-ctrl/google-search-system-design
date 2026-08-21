@@ -1,5 +1,5 @@
 flowchart LR
-    subgraph PUSH["📤 PUSH — publisher-initiated · seconds"]
+    subgraph PUSH["📤 PUSH: publisher-initiated · seconds"]
         P1["Indexing API submission<br/>latency: seconds<br/>⚠️ requires site verification,<br/>strict quotas, abuse-prone"]
         P2["Sitemap ping on update<br/>latency: seconds–minutes"]
         P3["PubSubHubbub / WebSub<br/>real-time feed push"]
@@ -12,7 +12,7 @@ flowchart LR
         S3["A high-authority page<br/>links to something new"]
     end
 
-    subgraph PULL["📥 PULL — crawler-initiated · minutes–weeks"]
+    subgraph PULL["📥 PULL: crawler-initiated · minutes–weeks"]
         L1["High-frequency recrawl<br/>of known hot pages<br/>latency: minutes"]
         L2["Sitemap periodic re-read<br/>latency: hours"]
         L3["Normal scheduled recrawl<br/>latency: days–weeks"]
@@ -25,7 +25,7 @@ flowchart LR
 
     VERIFY --> V1["Confirm site ownership"]
     VERIFY --> V2["Enforce per-site quotas"]
-    VERIFY --> V3["Fetch and verify the content<br/>actually changed — never trust<br/>the claim alone"]
+    VERIFY --> V3["Fetch and verify the content<br/>actually changed: never trust<br/>the claim alone"]
     VERIFY --> V4["Apply spam and quality scoring<br/>BEFORE fast-track admission"]
 
     V1 & V2 & V3 & V4 --> FT["Fast-track queue"]

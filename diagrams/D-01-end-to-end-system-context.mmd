@@ -3,19 +3,19 @@ flowchart TB
         SITES["~200B+ known URLs<br/>HTML · PDF · Video · Feeds"]
     end
 
-    subgraph INGEST["① INGESTION — offline, continuous"]
+    subgraph INGEST["① INGESTION: offline, continuous"]
         CRAWL["Crawler Fleet<br/>fetch · robots · politeness"]
         PROC["Content Processing<br/>parse · normalize · dedup"]
         LINK["Link Graph Builder<br/>PageRank · anchors"]
     end
 
-    subgraph BUILD["② INDEX CONSTRUCTION — batch + streaming"]
+    subgraph BUILD["② INDEX CONSTRUCTION: batch + streaming"]
         DOCDB[("Document Store<br/>Bigtable-like")]
         IDX["Index Builder<br/>MapReduce · compaction"]
         SHARDS[("Inverted Index<br/>thousands of shards")]
     end
 
-    subgraph SERVE["③ SERVING — online, p99 &lt; 300 ms"]
+    subgraph SERVE["③ SERVING: online, p99 &lt; 300 ms"]
         FE["Frontend / GSLB"]
         QU["Query Understanding"]
         MIX["Mixer / Blender"]

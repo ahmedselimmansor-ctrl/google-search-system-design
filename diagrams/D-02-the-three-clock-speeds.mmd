@@ -1,15 +1,15 @@
 flowchart LR
-    subgraph L1["🐢 Loop 1 — Discovery · days to weeks"]
+    subgraph L1["🐢 Loop 1: Discovery · days to weeks"]
         direction TB
         A1["Crawl the web"] --> A2["Extract links"] --> A3["Recompute link graph"] --> A1
     end
 
-    subgraph L2["🐇 Loop 2 — Freshness · seconds to minutes"]
+    subgraph L2["🐇 Loop 2: Freshness · seconds to minutes"]
         direction TB
         B1["Detect changed page"] --> B2["Incremental index update"] --> B3["Push to serving tier"] --> B1
     end
 
-    subgraph L3["⚡ Loop 3 — Query · &lt; 300 milliseconds"]
+    subgraph L3["⚡ Loop 3: Query · &lt; 300 milliseconds"]
         direction TB
         C1["Understand query"] --> C2["Retrieve candidates"] --> C3["Rank & blend"] --> C4["Render SERP"]
     end

@@ -20,7 +20,7 @@ flowchart TB
         E1["Docid reordering:<br/>assign nearby ids to similar docs<br/>→ smaller gaps → 10-20% further gain"]
         E2["Frequency capping:<br/>tf above ~255 adds no ranking value"]
         E3["Position pruning:<br/>drop positions in tier 2,<br/>lose phrase queries, save 60%"]
-        E4["Stopword handling:<br/>keep but store cheaply —<br/>deleting breaks phrase search"]
+        E4["Stopword handling:<br/>keep but store cheaply:<br/>deleting breaks phrase search"]
     end
 
     OUT --> EXTRA

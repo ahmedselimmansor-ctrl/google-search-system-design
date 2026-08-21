@@ -7,7 +7,7 @@ flowchart TB
 
     O1 --> A1["Recompute content hash + SimHash"]
     A1 --> D{"Actually different<br/>from previous version?"}
-    D -->|"No — 304 or identical"| STOP["🛑 Stop.<br/>No downstream work.<br/>This early exit is what<br/>makes incremental viable."]
+    D -->|"No: 304 or identical"| STOP["🛑 Stop.<br/>No downstream work.<br/>This early exit is what<br/>makes incremental viable."]
     D -->|"Yes"| A2["Reparse: extract text, links, metadata"]
 
     A2 --> T2[("Write: contents:text,<br/>metadata:*, outlinks:*")]
@@ -21,7 +21,7 @@ flowchart TB
 
     T3 -->|"triggers"| O3["👁️ Observer: InlinksChanged"]
     O3 --> A6["Update aggregated anchor text"]
-    A6 --> A7["Mark target's PageRank as stale<br/>⚠️ do NOT recompute globally —<br/>queue for the next batch pass"]
+    A6 --> A7["Mark target's PageRank as stale<br/>⚠️ do NOT recompute globally:<br/>queue for the next batch pass"]
 
     T2 -->|"triggers"| O4["👁️ Observer: ReadyToIndex"]
     O4 --> A8["Emit index update:<br/>docid, tokens, positions, signals"]

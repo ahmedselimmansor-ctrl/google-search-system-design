@@ -15,8 +15,8 @@ flowchart TB
     subgraph TRAIN["③ Model training"]
         OBJ{"Objective formulation"}
         OBJ -->|"Pointwise"| PW["Predict relevance per doc<br/>simple, ignores ranking structure"]
-        OBJ -->|"Pairwise"| PR2["Predict which of two docs<br/>ranks higher — RankNet"]
-        OBJ -->|"Listwise"| LW["Optimize the whole list<br/>directly against NDCG —<br/>LambdaMART, LambdaRank"]
+        OBJ -->|"Pairwise"| PR2["Predict which of two docs<br/>ranks higher: RankNet"]
+        OBJ -->|"Listwise"| LW["Optimize the whole list<br/>directly against NDCG:<br/>LambdaMART, LambdaRank"]
         LW --> MODEL["Trained model<br/>GBDT for L2 · transformer for L3"]
         PW --> MODEL
         PR2 --> MODEL
@@ -33,7 +33,7 @@ flowchart TB
     MODEL --> E1 & E2 & E3
 
     E1 & E2 & E3 --> GATE{"Beats production<br/>on every slice?"}
-    GATE -->|"No"| BACK["Iterate — investigate<br/>the regressed slice"]
+    GATE -->|"No"| BACK["Iterate: investigate<br/>the regressed slice"]
     BACK --> OBJ
 
     GATE -->|"Yes"| AB["⑤ Online A/B test<br/>small traffic slice<br/>see Chapter 13"]

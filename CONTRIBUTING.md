@@ -17,7 +17,7 @@ Thank you for considering a contribution. This repository is an educational refe
 | Priority | Contribution |
 |:--:|---|
 | 🔴 **Highest** | **Factual corrections**, especially anywhere the text over-claims about real Google internals |
-| 🔴 **Highest** | **Arabic language improvements** — better terminology, more natural phrasing, typos |
+| 🔴 **Highest** | **Arabic language improvements**: better terminology, more natural phrasing, typos |
 | 🟠 High | Clearer diagrams, or diagrams that fix a misleading simplification |
 | 🟠 High | Missing citations, or corrections to existing ones |
 | 🟡 Medium | New sections covering a genuinely missing subsystem |
@@ -39,13 +39,13 @@ If you add a number, either cite a public source or label it explicitly as an es
 **Prose**
 - Explain *why* a design choice was made, not only *what* it is. A section that lists components without naming the constraint that forced them is not finished.
 - State the cost of every trade-off. "We chose X" is incomplete; "We chose X, accepting Y" is complete.
-- Prefer concrete numbers over adjectives — "225 TB" beats "very large".
+- Prefer concrete numbers over adjectives: "225 TB" beats "very large".
 
 **Diagrams**
-- Mermaid only. No image files — they cannot be diffed, translated or maintained.
+- Mermaid only. No image files: they cannot be diffed, translated or maintained.
 - Every diagram gets the next free `D-NN` id and a caption line above it:
   ```
-  > **Diagram D-79 — What it shows**
+  > **Diagram D-79 · What it shows**
   ```
 - Quote every node label: `A["Text here"]`. Unquoted labels break on punctuation.
 - Use the standard colour classes (see [diagrams/README.md](diagrams/README.md)).
@@ -56,9 +56,9 @@ If you add a number, either cite a public source or label it explicitly as an es
 
 **Bilingual structure**
 - Every change to `docs/en/NN-*.md` should have a matching change in `docs/ar/NN-*.md`.
-- If you cannot write the Arabic, open the PR anyway with the English change and say so — someone can pair with you. An English-only PR is far better than no PR.
+- If you cannot write the Arabic, open the PR anyway with the English change and say so: someone can pair with you. An English-only PR is far better than no PR.
 - Arabic prose is wrapped in `<div dir="rtl" align="right">` blocks. Mermaid code fences must sit **outside** those blocks (close the div before the fence, reopen after), otherwise GitHub will not render the diagram.
-- Keep the diagram `D-NN` ids identical across both languages — only the labels are translated.
+- Keep the diagram `D-NN` ids identical across both languages: only the labels are translated.
 
 ### Pull request checklist
 
@@ -71,7 +71,7 @@ If you add a number, either cite a public source or label it explicitly as an es
 
 ### Reporting an error
 
-Open an issue with the chapter, the section number, what is wrong, and — if you have it — a public source for the correct version. Corrections are the most valuable contribution this repository can receive.
+Open an issue with the chapter, the section number, what is wrong, and (if you have it) a public source for the correct version. Corrections are the most valuable contribution this repository can receive.
 
 ---
 
@@ -86,7 +86,7 @@ Open an issue with the chapter, the section number, what is wrong, and — if yo
 | الأولوية | المساهمة |
 |:--:|---|
 | 🔴 **الأعلى** | **التصويبات الواقعية**، خصوصًا حيث يبالغ النص في الادعاء بشأن بنية جوجل الداخلية |
-| 🔴 **الأعلى** | **تحسينات اللغة العربية** — مصطلحات أفضل وصياغة أكثر طبيعية وتصحيح الأخطاء |
+| 🔴 **الأعلى** | **تحسينات اللغة العربية**: مصطلحات أفضل وصياغة أكثر طبيعية وتصحيح الأخطاء |
 | 🟠 عالية | مخططات أوضح، أو مخططات تصحح تبسيطًا مضلِّلًا |
 | 🟠 عالية | مراجع ناقصة أو تصويب المراجع الموجودة |
 | 🟡 متوسطة | أقسام جديدة تغطي نظامًا فرعيًا غائبًا فعلًا |
@@ -108,10 +108,10 @@ Open an issue with the chapter, the section number, what is wrong, and — if yo
 **النص**
 - اشرح **لماذا** اتُّخذ قرار التصميم لا **ما هو** فحسب. فالقسم الذي يعدّد المكوّنات دون تسمية القيد الذي فرضها ليس مكتملًا.
 - اذكر ثمن كل مفاضلة. فعبارة «اخترنا س» ناقصة، و«اخترنا س قابلين بـص» كاملة.
-- فضّل الأرقام الملموسة على الصفات — «225 تيرابايت» خير من «كبير جدًا».
+- فضّل الأرقام الملموسة على الصفات: «225 تيرابايت» خير من «كبير جدًا».
 
 **المخططات**
-- Mermaid فقط. لا ملفات صور — فهي غير قابلة للمقارنة ولا للترجمة ولا للصيانة.
+- Mermaid فقط. لا ملفات صور، فهي غير قابلة للمقارنة ولا للترجمة ولا للصيانة.
 - كل مخطط ينال المعرّف التالي المتاح `D-NN` مع سطر تعريف فوقه.
 - ضع كل تسمية عقدة بين علامتَي اقتباس: `A["النص هنا"]`، وإلا انكسرت عند علامات الترقيم.
 - استخدم أصناف الألوان القياسية (راجع [diagrams/README.md](diagrams/README.md)).
@@ -119,9 +119,9 @@ Open an issue with the chapter, the section number, what is wrong, and — if yo
 
 **البنية ثنائية اللغة**
 - كل تغيير في `docs/en/NN-*.md` ينبغي أن يقابله تغيير في `docs/ar/NN-*.md`.
-- وإن لم تستطع كتابة العربية، فافتح طلب السحب بالإنجليزية وقل ذلك — فقد يشاركك أحدهم. وطلب سحب بالإنجليزية وحدها خير بكثير من لا شيء.
+- وإن لم تستطع كتابة العربية، فافتح طلب السحب بالإنجليزية وقل ذلك، فقد يشاركك أحدهم. وطلب سحب بالإنجليزية وحدها خير بكثير من لا شيء.
 - النص العربي مغلَّف بكتل `<div dir="rtl" align="right">`، ويجب أن تقع أسوار شيفرة Mermaid **خارج** تلك الكتل (أغلق الكتلة قبل السور وافتحها بعده)، وإلا لم يعرض GitHub المخطط.
-- أبقِ معرّفات `D-NN` متطابقة في اللغتين — فالمترجَم هو التسميات فقط.
+- أبقِ معرّفات `D-NN` متطابقة في اللغتين، فالمترجَم هو التسميات فقط.
 
 ### قائمة تحقق طلب السحب
 
@@ -134,7 +134,7 @@ Open an issue with the chapter, the section number, what is wrong, and — if yo
 
 ### الإبلاغ عن خطأ
 
-افتح Issue يذكر الفصل ورقم القسم وما هو الخطأ — ومصدرًا عامًا للصيغة الصحيحة إن توفر. فالتصويبات أثمن ما يمكن أن يتلقاه هذا المستودع.
+افتح Issue يذكر الفصل ورقم القسم وما هو الخطأ، ومصدرًا عامًا للصيغة الصحيحة إن توفر. فالتصويبات أثمن ما يمكن أن يتلقاه هذا المستودع.
 
 </div>
 

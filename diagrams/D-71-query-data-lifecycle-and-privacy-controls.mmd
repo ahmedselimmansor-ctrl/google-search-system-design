@@ -6,7 +6,7 @@ flowchart TB
     LOG -->|"Not needed"| DROP["🗑️ Never stored"]
 
     L1 --> P1["① Immediate: strip or truncate<br/>direct identifiers"]
-    P1 --> P2["② Short window: full record for<br/>abuse detection and debugging<br/>— strictly access-controlled"]
+    P1 --> P2["② Short window: full record for<br/>abuse detection and debugging<br/>strictly access-controlled"]
     P2 --> P3["③ Anonymization: IP truncated,<br/>cookies unlinked, session broken"]
     P3 --> P4["④ Aggregation: only counts and<br/>distributions retained"]
     P4 --> P5["⑤ Deletion of raw records<br/>on a fixed schedule"]
@@ -19,14 +19,14 @@ flowchart TB
 
     subgraph CONTROLS["User-facing controls that must actually work"]
         UC1["View and delete history"]
-        UC2["Turn off personalization<br/>— and have it genuinely off"]
-        UC3["Private / incognito mode<br/>— no logging tied to identity"]
+        UC2["Turn off personalization<br/>and have it genuinely off"]
+        UC3["Private / incognito mode<br/>no logging tied to identity"]
         UC4["Data export"]
         UC5["Auto-delete after N months"]
     end
 
     subgraph RISKS["Privacy risks specific to search"]
-        R1["⚠️ Rare queries are identifying<br/>even without a user id —<br/>a unique query IS a fingerprint"]
+        R1["⚠️ Rare queries are identifying<br/>even without a user id:<br/>a unique query IS a fingerprint"]
         R2["⚠️ Autocomplete can leak<br/>another user's private query<br/>if popularity thresholds are too low"]
         R3["⚠️ Aggregate statistics can be<br/>de-anonymized by intersection<br/>→ apply k-anonymity thresholds<br/>and differential privacy noise"]
         R4["⚠️ Logs are a subpoena target;<br/>data you never stored cannot<br/>be compelled or breached"]

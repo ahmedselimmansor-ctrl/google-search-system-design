@@ -7,10 +7,10 @@ flowchart TB
     DETECT -->|"Pull: scheduled recrawl<br/>found new content"| CLASSIFY
     DETECT -->|"Signal: trending query<br/>with no good results"| FAST
 
-    CLASSIFY{"Is this page<br/>freshness-critical?"} -->|"Yes — news, forum,<br/>high change rate,<br/>high query demand"| FAST
-    CLASSIFY -->|"No — the other 99.9%"| SLOW
+    CLASSIFY{"Is this page<br/>freshness-critical?"} -->|"Yes: news, forum,<br/>high change rate,<br/>high query demand"| FAST
+    CLASSIFY -->|"No: the other 99.9%"| SLOW
 
-    subgraph FAST["⚡ FAST TRACK — streaming · seconds to minutes"]
+    subgraph FAST["⚡ FAST TRACK: streaming · seconds to minutes"]
         F1["Priority fetch<br/>bypasses normal queue"]
         F2["Streaming processing<br/>parse · dedupe · classify"]
         F3["Incremental signal computation<br/>approximate PageRank,<br/>partial anchor text"]
@@ -19,7 +19,7 @@ flowchart TB
         F1 --> F2 --> F3 --> F4 --> F5
     end
 
-    subgraph SLOW["🐢 BATCH TRACK — hours to days"]
+    subgraph SLOW["🐢 BATCH TRACK: hours to days"]
         S1["Normal crawl queue"]
         S2["Batch processing"]
         S3["Full-precision signals<br/>exact PageRank over<br/>the complete graph"]
@@ -31,7 +31,7 @@ flowchart TB
     F5 --> SERVE
     S5 --> SERVE
 
-    subgraph SERVE["🔍 Serving tier — queries both, merges results"]
+    subgraph SERVE["🔍 Serving tier: queries both, merges results"]
         M1[("Real-time segments<br/>small · in RAM · minutes old")]
         M2[("Batch segments<br/>large · immutable · hours-days old")]
         M3["Query fans out to both,<br/>results merged and deduped"]

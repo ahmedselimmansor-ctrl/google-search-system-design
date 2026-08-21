@@ -7,7 +7,7 @@ stateDiagram-v2
     Decoded --> Parsed: DOM built
     Decoded --> RenderQueued: JS-dependent and worth rendering
     RenderQueued --> Parsed: headless render complete
-    RenderQueued --> Parsed: render timeout — use static DOM
+    RenderQueued --> Parsed: render timeout · use static DOM
 
     Parsed --> Extracted: boilerplate removed, fields segmented
     Extracted --> Tokenized: language detected, tokens emitted
@@ -29,6 +29,6 @@ stateDiagram-v2
         A duplicate is not discarded.
         Its inbound links and anchor text
         are merged into the canonical
-        document — otherwise mirrors
+        document: otherwise mirrors
         would silently destroy PageRank.
     end note

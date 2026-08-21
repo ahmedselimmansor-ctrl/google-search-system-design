@@ -1,6 +1,6 @@
 # assets
 
-This folder holds generated output. Nothing here is required to read the repository — GitHub renders every diagram natively from its Mermaid source.
+This folder holds generated output. Nothing here is required to read the repository: GitHub renders every diagram natively from its Mermaid source.
 
 ## `rendered/`
 

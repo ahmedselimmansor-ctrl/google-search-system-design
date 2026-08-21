@@ -12,11 +12,11 @@
 
 ## 4.1 The crawler's real job
 
-A naïve reading says the crawler's job is "download the web". It is not. From [Chapter 03](03-capacity-estimation.md) we know the frontier holds **10¹²+ URLs** but the fleet can fetch only **~3.3 × 10⁹ per day** — about **0.3 %**. The crawler therefore has exactly one hard job:
+A naïve reading says the crawler's job is "download the web". It is not. From [Chapter 03](03-capacity-estimation.md) we know the frontier holds **10¹²+ URLs** but the fleet can fetch only **~3.3 × 10⁹ per day**: about **0.3 %**. The crawler therefore has exactly one hard job:
 
-> **Decide, continuously and under adversarial conditions, which 0.3 % of known URLs are worth fetching today — while never being rude to anyone's server.**
+> **Decide, continuously and under adversarial conditions, which 0.3 % of known URLs are worth fetching today, while never being rude to anyone's server.**
 
-Everything else — HTTP, parsing, storage — is comparatively easy. Prioritisation and politeness are where the engineering lives.
+Everything else (HTTP, parsing, storage) is comparatively easy. Prioritisation and politeness are where the engineering lives.
 
 ### The four constraints
 
@@ -31,7 +31,7 @@ Everything else — HTTP, parsing, storage — is comparatively easy. Prioritisa
 
 ## 4.2 Crawler architecture
 
-> **Diagram D-15 — Crawler fleet architecture**
+> **Diagram D-15 · Crawler fleet architecture**
 
 ```mermaid
 flowchart TB
@@ -92,16 +92,16 @@ flowchart TB
 
 ---
 
-## 4.3 The URL frontier — the heart of the crawler
+## 4.3 The URL frontier: the heart of the crawler
 
 The frontier must satisfy two goals that actively fight each other:
 
 - **Priority:** fetch important, fresh, in-demand URLs first.
 - **Politeness:** never issue two requests to one host too close together.
 
-A single priority queue satisfies the first and catastrophically violates the second — the highest-priority URLs cluster on a few big hosts, so a pure priority queue hammers those hosts. The standard solution (Mercator-style, described in Manning/Raghavan/Schütze's *Introduction to Information Retrieval*) is a **two-stage queue system**.
+A single priority queue satisfies the first and catastrophically violates the second: the highest-priority URLs cluster on a few big hosts, so a pure priority queue hammers those hosts. The standard solution (Mercator-style, described in Manning/Raghavan/Schütze's *Introduction to Information Retrieval*) is a **two-stage queue system**.
 
-> **Diagram D-16 — Two-stage frontier: priority in front, politeness behind**
+> **Diagram D-16 · Two-stage frontier: priority in front, politeness behind**
 
 ```mermaid
 flowchart LR
@@ -153,20 +153,20 @@ None of these weights is static; they are tuned against a coverage/freshness obj
 
 ### The seen-URL problem
 
-Before enqueuing, the frontier must answer "have I seen this URL?" — **10¹² times a day**, against a set of **10¹² URLs**. Storing 10¹² URLs at ~70 bytes each is 70 TB, far too large to keep in RAM on one machine.
+Before enqueuing, the frontier must answer "have I seen this URL?": **10¹² times a day**, against a set of **10¹² URLs**. Storing 10¹² URLs at ~70 bytes each is 70 TB, far too large to keep in RAM on one machine.
 
 The standard structure is a **two-level test**:
 
-1. **Bloom filter in RAM** — ~10 bits per URL → ~1.25 TB sharded across the fleet, with ~1 % false-positive rate. A *negative* answer is definitive: the URL is genuinely new.
-2. **Exact store on disk** (Bigtable-like, keyed by URL hash) — consulted only on a Bloom *hit*, to distinguish a true duplicate from a false positive.
+1. **Bloom filter in RAM**: ~10 bits per URL → ~1.25 TB sharded across the fleet, with ~1 % false-positive rate. A *negative* answer is definitive: the URL is genuinely new.
+2. **Exact store on disk** (Bigtable-like, keyed by URL hash): consulted only on a Bloom *hit*, to distinguish a true duplicate from a false positive.
 
 Because Bloom filters never produce false negatives, no new URL is ever wrongly discarded. The 1 % false-positive rate merely costs an occasional disk lookup. This is the right trade: the cheap structure handles the common case, the expensive one handles the ambiguous case.
 
 ---
 
-## 4.4 Politeness — the non-negotiable constraint
+## 4.4 Politeness: the non-negotiable constraint
 
-> **Diagram D-17 — Per-host politeness state machine**
+> **Diagram D-17 · Per-host politeness state machine**
 
 ```mermaid
 stateDiagram-v2
@@ -174,8 +174,8 @@ stateDiagram-v2
 
     Unknown --> FetchingRobots: first URL for this host
     FetchingRobots --> RobotsOK: 200, parsed
-    FetchingRobots --> RobotsMissing: 404 — allow all
-    FetchingRobots --> RobotsDenyAll: 5xx or timeout — assume disallow
+    FetchingRobots --> RobotsMissing: 404 · allow all
+    FetchingRobots --> RobotsDenyAll: 5xx or timeout · assume disallow
     FetchingRobots --> RobotsDenyAll: explicit Disallow /
 
     RobotsOK --> Idle: crawl-delay recorded
@@ -184,7 +184,7 @@ stateDiagram-v2
 
     Idle --> Eligible: now >= next_fetch_time
     Eligible --> Fetching: worker acquires host lease
-    Fetching --> Idle: success — next_fetch_time = now + delay
+    Fetching --> Idle: success · next_fetch_time = now + delay
 
     Fetching --> Backoff: 429 or 503
     Fetching --> Backoff: latency above threshold
@@ -213,7 +213,7 @@ stateDiagram-v2
 | `robots.txt` unreachable → assume disallow | Fail closed, never fail open |
 | Respect `Crawl-delay` when present | Feeds directly into `next_fetch_time` |
 | Default delay when absent | Typically 1 s, adaptive by host capacity |
-| Adaptive slowdown on latency rise | If the host slows, we slow — treat their latency as a signal |
+| Adaptive slowdown on latency rise | If the host slows, we slow, treat their latency as a signal |
 | Honour `429` / `503` + `Retry-After` | Exponential backoff with jitter and a cap |
 | Rate-limit by **IP**, not just hostname | Thousands of vhosts can share one server |
 | Identify honestly in `User-Agent` | Include a URL explaining the crawler and how to block it |
@@ -224,7 +224,7 @@ stateDiagram-v2
 
 ## 4.5 The fetch path in detail
 
-> **Diagram D-18 — Life of a single fetch**
+> **Diagram D-18 · Life of a single fetch**
 
 ```mermaid
 sequenceDiagram
@@ -264,7 +264,7 @@ sequenceDiagram
         alt 304 Not Modified
             H-->>W: 304
             W->>ST: bump last-verified timestamp only
-            Note over W,ST: Cheapest possible outcome —<br/>no body transferred, no reparse
+            Note over W,ST: Cheapest possible outcome:<br/>no body transferred, no reparse
         else 200 OK
             H-->>W: body (capped at N MB)
             W->>W: content-type check, charset detect
@@ -290,9 +290,9 @@ sequenceDiagram
 
 Roughly **30–40 % of the web is duplicate or near-duplicate content**: mirrors, syndication, printer-friendly versions, URL parameter variants, boilerplate-only differences. Indexing all of it wastes storage, wastes ranking quality, and produces terrible SERPs.
 
-Exact duplicates are trivial — hash the content. Near-duplicates need a **locality-sensitive hash**, and the canonical choice is **SimHash** (Charikar 2002; Manku et al. showed it works at web scale at Google in 2007).
+Exact duplicates are trivial: hash the content. Near-duplicates need a **locality-sensitive hash**, and the canonical choice is **SimHash** (Charikar 2002; Manku et al. showed it works at web scale at Google in 2007).
 
-> **Diagram D-19 — SimHash near-duplicate pipeline**
+> **Diagram D-19 · SimHash near-duplicate pipeline**
 
 ```mermaid
 flowchart TB
@@ -354,11 +354,11 @@ Much duplication is removable by normalising URLs before fetching:
 
 ---
 
-## 4.7 Recrawl scheduling — spending the budget wisely
+## 4.7 Recrawl scheduling: spending the budget wisely
 
-Once a page is in the corpus, the question becomes: *when should we look again?* Recrawling everything uniformly is enormously wasteful, because change rates on the web span at least six orders of magnitude — a news homepage changes every minute, an archived PDF never changes again.
+Once a page is in the corpus, the question becomes: *when should we look again?* Recrawling everything uniformly is enormously wasteful, because change rates on the web span at least six orders of magnitude; a news homepage changes every minute, an archived PDF never changes again.
 
-> **Diagram D-20 — Adaptive recrawl scheduling**
+> **Diagram D-20 · Adaptive recrawl scheduling**
 
 ```mermaid
 flowchart TB
@@ -376,7 +376,7 @@ flowchart TB
 
     ADJ --> BUDGET{"Fits daily<br/>crawl budget?"}
     BUDGET -->|"Yes"| SCHED["Schedule fetch"]
-    BUDGET -->|"No"| DEFER["Defer — lowest value first"]
+    BUDGET -->|"No"| DEFER["Defer: lowest value first"]
 
     SCHED --> RESULT{"Did content change?"}
     RESULT -->|"Changed"| UP["λ ← increase<br/>crawl sooner next time"]
@@ -413,7 +413,7 @@ Note also that change rate alone is insufficient. A page that changes hourly but
 | **Link farms** | Thousands of hosts cross-linking to inflate PageRank | Host-level and IP-block-level graph analysis; see [Ch 14](14-security-abuse.md) |
 | **DNS wildcard sprawl** | `*.spam.com` → unlimited subdomains | Budget per registrable domain, not per hostname |
 
-The unifying defence: **budget everything, at every granularity** — per URL pattern, per host, per IP block, per registrable domain. An adversary can always generate more URLs than you can fetch; the only durable answer is a hard cap on how much of your capacity any one entity can consume.
+The unifying defence: **budget everything, at every granularity**; per URL pattern, per host, per IP block, per registrable domain. An adversary can always generate more URLs than you can fetch; the only durable answer is a hard cap on how much of your capacity any one entity can consume.
 
 ---
 

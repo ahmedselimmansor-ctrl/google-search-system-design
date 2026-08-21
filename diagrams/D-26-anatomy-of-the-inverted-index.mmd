@@ -1,5 +1,5 @@
 flowchart LR
-    subgraph FWD["Forward view — what we crawled"]
+    subgraph FWD["Forward view: what we crawled"]
         D1["doc 17<br/>'the quick brown fox'"]
         D2["doc 42<br/>'quick brown dogs run'"]
         D3["doc 99<br/>'the fox and the hound'"]
@@ -7,7 +7,7 @@ flowchart LR
 
     FWD -->|"INVERT"| INV
 
-    subgraph INV["Inverted view — what we query"]
+    subgraph INV["Inverted view: what we query"]
         direction TB
         L["📖 Lexicon / term dictionary<br/>term → df, pointer, stats"]
 

@@ -16,8 +16,8 @@ sequenceDiagram
 
     L->>M: merge
 
-    M->>M: 1️⃣ Deduplicate by docid<br/>a doc may exist in BOTH —<br/>the real-time version is newer
-    Note over M: Rule — newest version wins.<br/>Batch segments carry a watermark<br/>timestamp, and RT entries older<br/>than it are discarded.
+    M->>M: 1️⃣ Deduplicate by docid<br/>a doc may exist in BOTH:<br/>the real-time version is newer
+    Note over M: Rule · newest version wins.<br/>Batch segments carry a watermark<br/>timestamp, and RT entries older<br/>than it are discarded.
 
     M->>M: 2️⃣ Reconcile score scales<br/>⚠️ approximate PageRank is not<br/>comparable to exact PageRank
     Note over M: Fix: calibrate RT signals against<br/>batch distribution, or apply an<br/>explicit freshness prior instead of<br/>pretending the scores are equivalent.

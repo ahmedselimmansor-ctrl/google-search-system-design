@@ -1,6 +1,6 @@
 flowchart TB
-    SLI["SLIs — what we measure<br/>latency · availability · quality"]
-    SLI --> SLO["SLOs — what we promise<br/>p99 &lt; 300 ms · 99.99% success"]
+    SLI["SLIs: what we measure<br/>latency · availability · quality"]
+    SLI --> SLO["SLOs: what we promise<br/>p99 &lt; 300 ms · 99.99% success"]
     SLO --> EB["Error budget<br/>1 − SLO, measured over 28 days"]
 
     EB --> D{"Budget<br/>remaining?"}

@@ -12,13 +12,13 @@
 
 ## 11.1 The problem batch indexing cannot solve
 
-[Chapter 06](06-indexing.md) described index construction as a MapReduce over the whole corpus — 1 PB of text, ~14 hours. That is perfectly adequate for the ordinary web. It is completely useless for an earthquake.
+[Chapter 06](06-indexing.md) described index construction as a MapReduce over the whole corpus: 1 PB of text, ~14 hours. That is perfectly adequate for the ordinary web. It is completely useless for an earthquake.
 
-The requirement from [Chapter 02](02-requirements.md) is *median time-to-index under 5 minutes for the hot set*. A full rebuild cannot deliver that at any cost, because the bottleneck is not compute — it is the fact that a full rebuild recomputes **10¹¹ documents to reflect changes in 10⁶ of them**. The write amplification is 100,000×.
+The requirement from [Chapter 02](02-requirements.md) is *median time-to-index under 5 minutes for the hot set*. A full rebuild cannot deliver that at any cost, because the bottleneck is not compute: it is the fact that a full rebuild recomputes **10¹¹ documents to reflect changes in 10⁶ of them**. The write amplification is 100,000×.
 
-The answer is not to make the batch job faster. It is to **stop rebuilding what did not change** — which is precisely the insight behind Google's Percolator paper (2010) and the Caffeine indexing system it enabled.
+The answer is not to make the batch job faster. It is to **stop rebuilding what did not change**, which is precisely the insight behind Google's Percolator paper (2010) and the Caffeine indexing system it enabled.
 
-> **Diagram D-55 — Two-track indexing**
+> **Diagram D-55 · Two-track indexing**
 
 ```mermaid
 flowchart TB
@@ -30,10 +30,10 @@ flowchart TB
     DETECT -->|"Pull: scheduled recrawl<br/>found new content"| CLASSIFY
     DETECT -->|"Signal: trending query<br/>with no good results"| FAST
 
-    CLASSIFY{"Is this page<br/>freshness-critical?"} -->|"Yes — news, forum,<br/>high change rate,<br/>high query demand"| FAST
-    CLASSIFY -->|"No — the other 99.9%"| SLOW
+    CLASSIFY{"Is this page<br/>freshness-critical?"} -->|"Yes: news, forum,<br/>high change rate,<br/>high query demand"| FAST
+    CLASSIFY -->|"No: the other 99.9%"| SLOW
 
-    subgraph FAST["⚡ FAST TRACK — streaming · seconds to minutes"]
+    subgraph FAST["⚡ FAST TRACK: streaming · seconds to minutes"]
         F1["Priority fetch<br/>bypasses normal queue"]
         F2["Streaming processing<br/>parse · dedupe · classify"]
         F3["Incremental signal computation<br/>approximate PageRank,<br/>partial anchor text"]
@@ -42,7 +42,7 @@ flowchart TB
         F1 --> F2 --> F3 --> F4 --> F5
     end
 
-    subgraph SLOW["🐢 BATCH TRACK — hours to days"]
+    subgraph SLOW["🐢 BATCH TRACK: hours to days"]
         S1["Normal crawl queue"]
         S2["Batch processing"]
         S3["Full-precision signals<br/>exact PageRank over<br/>the complete graph"]
@@ -54,7 +54,7 @@ flowchart TB
     F5 --> SERVE
     S5 --> SERVE
 
-    subgraph SERVE["🔍 Serving tier — queries both, merges results"]
+    subgraph SERVE["🔍 Serving tier: queries both, merges results"]
         M1[("Real-time segments<br/>small · in RAM · minutes old")]
         M2[("Batch segments<br/>large · immutable · hours-days old")]
         M3["Query fans out to both,<br/>results merged and deduped"]
@@ -72,15 +72,15 @@ flowchart TB
     class M1,M2,M3 serve
 ```
 
-**The key structural idea: the fast track trades accuracy for latency, and the batch track corrects it later.** A document indexed via the fast path has approximate ranking signals — PageRank computed from a partial graph, anchor text from whatever links happen to be known. It is *findable* within minutes but not perfectly *ranked*. When the batch pipeline catches up hours later, the accurate version supersedes it. Users get a fast, slightly-wrong answer immediately rather than a perfect answer tomorrow, which for breaking news is unambiguously the right trade.
+**The key structural idea: the fast track trades accuracy for latency, and the batch track corrects it later.** A document indexed via the fast path has approximate ranking signals; PageRank computed from a partial graph, anchor text from whatever links happen to be known. It is *findable* within minutes but not perfectly *ranked*. When the batch pipeline catches up hours later, the accurate version supersedes it. Users get a fast, slightly-wrong answer immediately rather than a perfect answer tomorrow, which for breaking news is unambiguously the right trade.
 
 ---
 
-## 11.2 Incremental processing — the Percolator model
+## 11.2 Incremental processing: the Percolator model
 
 Batch processing recomputes everything. Incremental processing computes only what changed, and propagates consequences. The mechanism is **observers**: triggers that fire when a specific column of a specific row changes.
 
-> **Diagram D-56 — Observer-driven incremental indexing**
+> **Diagram D-56 · Observer-driven incremental indexing**
 
 ```mermaid
 flowchart TB
@@ -92,7 +92,7 @@ flowchart TB
 
     O1 --> A1["Recompute content hash + SimHash"]
     A1 --> D{"Actually different<br/>from previous version?"}
-    D -->|"No — 304 or identical"| STOP["🛑 Stop.<br/>No downstream work.<br/>This early exit is what<br/>makes incremental viable."]
+    D -->|"No: 304 or identical"| STOP["🛑 Stop.<br/>No downstream work.<br/>This early exit is what<br/>makes incremental viable."]
     D -->|"Yes"| A2["Reparse: extract text, links, metadata"]
 
     A2 --> T2[("Write: contents:text,<br/>metadata:*, outlinks:*")]
@@ -106,7 +106,7 @@ flowchart TB
 
     T3 -->|"triggers"| O3["👁️ Observer: InlinksChanged"]
     O3 --> A6["Update aggregated anchor text"]
-    A6 --> A7["Mark target's PageRank as stale<br/>⚠️ do NOT recompute globally —<br/>queue for the next batch pass"]
+    A6 --> A7["Mark target's PageRank as stale<br/>⚠️ do NOT recompute globally:<br/>queue for the next batch pass"]
 
     T2 -->|"triggers"| O4["👁️ Observer: ReadyToIndex"]
     O4 --> A8["Emit index update:<br/>docid, tokens, positions, signals"]
@@ -133,11 +133,11 @@ flowchart TB
 
 ### Why this is genuinely hard
 
-The wide-column store from [Chapter 09](09-storage.md) deliberately offers **only single-row atomicity**. But an observer that adds an inlink must read the target row, modify it, and write it back — and two observers doing this concurrently on a popular target will lose updates.
+The wide-column store from [Chapter 09](09-storage.md) deliberately offers **only single-row atomicity**. But an observer that adds an inlink must read the target row, modify it, and write it back, and two observers doing this concurrently on a popular target will lose updates.
 
 Percolator's contribution was adding **multi-row snapshot-isolation transactions on top of** a Bigtable-class store, using a centralised timestamp oracle and two-phase commit encoded in extra columns. The cost is significant: a transactional write is several times more expensive than a plain one. The benefit is that incremental indexing becomes *correct*, which is what makes it usable in production rather than a source of subtly corrupted link data.
 
-**The `STOP` node deserves attention too.** The early exit when content is unchanged is not an optimisation detail — it is the property that makes the whole approach viable. Most recrawls find nothing new ([Chapter 04](04-crawling.md)), so most observer chains terminate at the first step. Without that early exit, incremental processing would do batch-scale work at streaming-scale frequency.
+**The `STOP` node deserves attention too.** The early exit when content is unchanged is not an optimisation detail: it is the property that makes the whole approach viable. Most recrawls find nothing new ([Chapter 04](04-crawling.md)), so most observer chains terminate at the first step. Without that early exit, incremental processing would do batch-scale work at streaming-scale frequency.
 
 ---
 
@@ -145,11 +145,11 @@ Percolator's contribution was adding **multi-row snapshot-isolation transactions
 
 Waiting to *discover* a change by recrawling is the slowest possible path. Publishers who want to be indexed quickly can tell you directly.
 
-> **Diagram D-57 — Change discovery channels, ranked by latency**
+> **Diagram D-57 · Change discovery channels, ranked by latency**
 
 ```mermaid
 flowchart LR
-    subgraph PUSH["📤 PUSH — publisher-initiated · seconds"]
+    subgraph PUSH["📤 PUSH: publisher-initiated · seconds"]
         P1["Indexing API submission<br/>latency: seconds<br/>⚠️ requires site verification,<br/>strict quotas, abuse-prone"]
         P2["Sitemap ping on update<br/>latency: seconds–minutes"]
         P3["PubSubHubbub / WebSub<br/>real-time feed push"]
@@ -162,7 +162,7 @@ flowchart LR
         S3["A high-authority page<br/>links to something new"]
     end
 
-    subgraph PULL["📥 PULL — crawler-initiated · minutes–weeks"]
+    subgraph PULL["📥 PULL: crawler-initiated · minutes–weeks"]
         L1["High-frequency recrawl<br/>of known hot pages<br/>latency: minutes"]
         L2["Sitemap periodic re-read<br/>latency: hours"]
         L3["Normal scheduled recrawl<br/>latency: days–weeks"]
@@ -175,7 +175,7 @@ flowchart LR
 
     VERIFY --> V1["Confirm site ownership"]
     VERIFY --> V2["Enforce per-site quotas"]
-    VERIFY --> V3["Fetch and verify the content<br/>actually changed — never trust<br/>the claim alone"]
+    VERIFY --> V3["Fetch and verify the content<br/>actually changed: never trust<br/>the claim alone"]
     VERIFY --> V4["Apply spam and quality scoring<br/>BEFORE fast-track admission"]
 
     V1 & V2 & V3 & V4 --> FT["Fast-track queue"]
@@ -190,9 +190,9 @@ flowchart LR
     class VERIFY,V1,V2,V3,V4 sec
 ```
 
-**Every push channel is an attack surface.** A "notify me when you update" API is, from a spammer's perspective, a way to jump the crawl queue. The verification layer is therefore not optional plumbing: ownership must be proven, quotas must be enforced per verified site, the claimed change must be confirmed by actually fetching the page, and quality scoring must run *before* the document enters the fast path — not after. A fast track without a verification gate is simply a fast track for spam.
+**Every push channel is an attack surface.** A "notify me when you update" API is, from a spammer's perspective, a way to jump the crawl queue. The verification layer is therefore not optional plumbing: ownership must be proven, quotas must be enforced per verified site, the claimed change must be confirmed by actually fetching the page, and quality scoring must run *before* the document enters the fast path, not after. A fast track without a verification gate is simply a fast track for spam.
 
-**The signal-driven channel is the clever one.** If thousands of users suddenly search for a term and the index has no good results, that is direct evidence the corpus is missing something important right now. Turning unmet query demand into crawl priority closes the loop from [Diagram D-01](../../README.md) — user behaviour steering the crawler — and it catches events no publisher thought to announce.
+**The signal-driven channel is the clever one.** If thousands of users suddenly search for a term and the index has no good results, that is direct evidence the corpus is missing something important right now. Turning unmet query demand into crawl priority closes the loop from [Diagram D-01](../../README.md) (user behaviour steering the crawler), and it catches events no publisher thought to announce.
 
 ---
 
@@ -200,7 +200,7 @@ flowchart LR
 
 The serving tier must query batch segments and real-time segments together and produce one coherent ranking.
 
-> **Diagram D-58 — Merging real-time and batch results**
+> **Diagram D-58 · Merging real-time and batch results**
 
 ```mermaid
 sequenceDiagram
@@ -221,8 +221,8 @@ sequenceDiagram
 
     L->>M: merge
 
-    M->>M: 1️⃣ Deduplicate by docid<br/>a doc may exist in BOTH —<br/>the real-time version is newer
-    Note over M: Rule — newest version wins.<br/>Batch segments carry a watermark<br/>timestamp, and RT entries older<br/>than it are discarded.
+    M->>M: 1️⃣ Deduplicate by docid<br/>a doc may exist in BOTH:<br/>the real-time version is newer
+    Note over M: Rule · newest version wins.<br/>Batch segments carry a watermark<br/>timestamp, and RT entries older<br/>than it are discarded.
 
     M->>M: 2️⃣ Reconcile score scales<br/>⚠️ approximate PageRank is not<br/>comparable to exact PageRank
     Note over M: Fix: calibrate RT signals against<br/>batch distribution, or apply an<br/>explicit freshness prior instead of<br/>pretending the scores are equivalent.
@@ -236,9 +236,9 @@ sequenceDiagram
     Note over L,RT: Compaction, continuously:<br/>real-time segments are folded<br/>into batch segments and dropped,<br/>keeping the RT set small enough<br/>to stay in RAM.
 ```
 
-**Step 2 is where naïve implementations break.** A document in the real-time index has an approximate PageRank computed from a partial link graph — typically an *underestimate*, since most of its inbound links have not been discovered yet. If you merge those scores directly with exact batch scores, fresh documents are systematically penalised, and your expensive freshness pipeline produces content nobody sees.
+**Step 2 is where naïve implementations break.** A document in the real-time index has an approximate PageRank computed from a partial link graph: typically an *underestimate*, since most of its inbound links have not been discovered yet. If you merge those scores directly with exact batch scores, fresh documents are systematically penalised, and your expensive freshness pipeline produces content nobody sees.
 
-The correct handling is to treat the two score distributions as different and calibrate between them, or — more robustly — to keep freshness as an *explicit* ranking prior applied by the ranker for freshness-intent queries, rather than hoping it emerges implicitly from mixed-precision signals.
+The correct handling is to treat the two score distributions as different and calibrate between them, or (more robustly) to keep freshness as an *explicit* ranking prior applied by the ranker for freshness-intent queries, rather than hoping it emerges implicitly from mixed-precision signals.
 
 ---
 

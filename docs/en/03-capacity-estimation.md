@@ -10,7 +10,7 @@
 
 ---
 
-> ⚠️ **Every number in this chapter is an order-of-magnitude estimate derived from public information.** None of it is measured from Google's production systems. The purpose is to demonstrate a *method* — if you change an assumption, the arithmetic should follow visibly. Assumptions are stated in bold so you can substitute your own.
+> ⚠️ **Every number in this chapter is an order-of-magnitude estimate derived from public information.** None of it is measured from Google's production systems. The purpose is to demonstrate a *method*: if you change an assumption, the arithmetic should follow visibly. Assumptions are stated in bold so you can substitute your own.
 
 ---
 
@@ -18,7 +18,7 @@
 
 Back-of-the-envelope estimation in a system design interview fails in one of two ways: too vague ("it's a lot of data") or too precise (six significant figures of fiction). The useful middle is a short chain where **each number is derived from the previous one and every assumption is named**.
 
-> **Diagram D-12 — Estimation dependency chain**
+> **Diagram D-12 · Estimation dependency chain**
 
 ```mermaid
 flowchart TB
@@ -73,9 +73,9 @@ flowchart TB
 | Extracted text, uncompressed | 10¹¹ × 10 KB | **1 PB** |
 | Extracted text, compressed 4:1 | 1 PB ÷ 4 | **250 TB** |
 | With ~5 historical versions retained | 2 PB × 5 | **~10 PB** |
-| Plus non-HTML, media metadata, fetched-but-unindexed | — | **tens to hundreds of PB** |
+| Plus non-HTML, media metadata, fetched-but-unindexed | n/a | **tens to hundreds of PB** |
 
-**The takeaway:** the *document store* is measured in tens of petabytes, and it is dominated by history and junk, not by the text you actually index. The text you actually index is only ~250 TB compressed — three orders of magnitude smaller. **Separating "everything we fetched" from "what we serve from" is the single most important storage decision in the system.**
+**The takeaway:** the *document store* is measured in tens of petabytes, and it is dominated by history and junk, not by the text you actually index. The text you actually index is only ~250 TB compressed: three orders of magnitude smaller. **Separating "everything we fetched" from "what we serve from" is the single most important storage decision in the system.**
 
 ---
 
@@ -99,11 +99,11 @@ postings = documents × tokens-per-document
 | Precomputed ranking features per doc | 10¹¹ × ~200 B | **~20 TB** |
 | Anchor text aggregated per doc | 10¹¹ × ~500 B | **~50 TB** |
 | Dense vectors, 768-dim int8, one model | 10¹¹ × 768 B | **~77 TB** |
-| **Total serving-resident data (one copy)** | — | **~600 TB ≈ 0.6 PB** |
+| **Total serving-resident data (one copy)** | n/a | **~600 TB ≈ 0.6 PB** |
 
 **Sanity check against the latency SLO:** 600 TB cannot be read from disk within 300 ms by any arrangement of hardware. It must be RAM- or flash-resident, distributed across thousands of machines, and touched in parallel. That constraint alone forces the entire sharded fan-out architecture. This is the moment in the design where the numbers stop being trivia and start dictating structure.
 
-> **Diagram D-13 — Where the bytes go**
+> **Diagram D-13 · Where the bytes go**
 
 ```mermaid
 pie showData
@@ -126,9 +126,9 @@ If every query had to touch all 600 TB, the fleet would be economically impossib
 
 | Tier | Share of corpus | Documents | Index share | Medium | Queries resolved here |
 |---|---:|---:|---:|---|---:|
-| **Tier 0 — hot** | 1 % | 10⁹ | ~6 TB | RAM | ~85 % |
-| **Tier 1 — warm** | 10 % | 10¹⁰ | ~60 TB | RAM + NVMe | ~12 % |
-| **Tier 2 — cold** | 89 % | ~8.9 × 10¹⁰ | ~534 TB | NVMe / flash | ~3 % |
+| **Tier 0: hot** | 1 % | 10⁹ | ~6 TB | RAM | ~85 % |
+| **Tier 1: warm** | 10 % | 10¹⁰ | ~60 TB | RAM + NVMe | ~12 % |
+| **Tier 2: cold** | 89 % | ~8.9 × 10¹⁰ | ~534 TB | NVMe / flash | ~3 % |
 
 A query enters Tier 0. If it collects enough high-quality candidates there, it never descends. Only when Tier 0 returns too few or too weak results does the system fall through to Tier 1, and rarely to Tier 2. This is the mechanism described in Jeff Dean's 2009 WSDM keynote, and it is worth roughly **two orders of magnitude of fleet cost.**
 
@@ -144,7 +144,7 @@ A query enters Tier 0. If it collects enough high-quality candidates there, it n
 - A leaf server sustains **~300 index QPS** (posting-list intersection + L1 scoring)
 - Usable index RAM per leaf host: **512 GB**
 
-### Step 1 — how many servers hold one copy of each tier?
+### Step 1: how many servers hold one copy of each tier?
 
 ```
 Tier 0:   6 TB ÷ 512 GB  ≈    12 servers per copy
@@ -152,7 +152,7 @@ Tier 1:  60 TB ÷ 512 GB  ≈   118 servers per copy
 Tier 2: 534 TB ÷ 2 TB NVMe ≈ 267 servers per copy
 ```
 
-### Step 2 — how many copies does the QPS demand?
+### Step 2: how many copies does the QPS demand?
 
 ```
 Tier 0:  1.8 × 10⁵ QPS × 100%  ÷ 300 QPS/server-set ≈ 600 copies
@@ -160,7 +160,7 @@ Tier 1:  1.8 × 10⁵ QPS × 15%   ÷ 300               ≈  90 copies
 Tier 2:  1.8 × 10⁵ QPS × 3%    ÷ 150 (slower, NVMe) ≈  36 copies
 ```
 
-### Step 3 — multiply
+### Step 3: multiply
 
 | Tier | Servers/copy | Copies | **Leaf servers** |
 |---|---:|---:|---:|
@@ -169,7 +169,7 @@ Tier 2:  1.8 × 10⁵ QPS × 3%    ÷ 150 (slower, NVMe) ≈  36 copies
 | Tier 2 | 267 | 36 | **9,612** |
 | | | **Total** | **~27,400** |
 
-### Step 4 — the rest of the serving fleet
+### Step 4: the rest of the serving fleet
 
 | Role | Sizing logic | Servers |
 |---|---|---:|
@@ -183,9 +183,9 @@ Tier 2:  1.8 × 10⁵ QPS × 3%    ÷ 150 (slower, NVMe) ≈  36 copies
 | **Serving total (one region)** | | **~35,000** |
 | **× 8 geographic regions** | | **~280,000** |
 
-**Reality check on this number.** ~10⁵–10⁶ machines is the right order of magnitude for a hyperscale search operation, and the arithmetic above lands inside it. If your estimate had come out at 1,000 machines or at 100 million, you would know an assumption was wrong by orders of magnitude — which is exactly what this exercise is for. It is a *consistency check*, not a prediction.
+**Reality check on this number.** ~10⁵–10⁶ machines is the right order of magnitude for a hyperscale search operation, and the arithmetic above lands inside it. If your estimate had come out at 1,000 machines or at 100 million, you would know an assumption was wrong by orders of magnitude, which is exactly what this exercise is for. It is a *consistency check*, not a prediction.
 
-> **Diagram D-14 — Fleet sizing derivation**
+> **Diagram D-14 · Fleet sizing derivation**
 
 ```mermaid
 flowchart LR
@@ -237,7 +237,7 @@ ingress        = 38,000 × 100 KB     ≈ 3.8 GB/s ≈ 30 Gbps sustained
 
 30 Gbps is *trivial* for an operator of this size. **Crawl is not bandwidth-bound.** It is bound by three other things:
 
-1. **Politeness.** With ~1 fetch/host/second and ~2 × 10⁸ active hosts, the theoretical global ceiling is enormous — but URLs are catastrophically skewed. A handful of hosts own billions of URLs each, and those hosts are exactly the ones you must crawl slowly.
+1. **Politeness.** With ~1 fetch/host/second and ~2 × 10⁸ active hosts, the theoretical global ceiling is enormous, but URLs are catastrophically skewed. A handful of hosts own billions of URLs each, and those hosts are exactly the ones you must crawl slowly.
 2. **DNS.** 38,000 fetches/s against a naive resolver would melt it. DNS must be aggressively cached and, in practice, self-hosted.
 3. **Selection.** With 10¹²+ known URLs and capacity for 3.3 × 10⁹ fetches/day, the frontier can only visit **0.3 % of what it knows about per day.** Crawling is fundamentally a *prioritisation* problem, not a throughput problem. See [Chapter 04](04-crawling.md).
 
@@ -248,7 +248,7 @@ ingress        = 38,000 × 100 KB     ≈ 3.8 GB/s ≈ 30 Gbps sustained
 | Job | Input | Assumed aggregate throughput | Wall-clock |
 |---|---:|---:|---|
 | Full index rebuild (MapReduce) | 1 PB text | 20 GB/s | ~14 hours |
-| PageRank, 30 iterations | 10¹¹ nodes, ~10¹² edges | — | ~hours on a graph engine |
+| PageRank, 30 iterations | 10¹¹ nodes, ~10¹² edges | n/a | ~hours on a graph engine |
 | Incremental index update | ~10⁹ changed docs/day | streaming | continuous |
 | Shard publish to serving tier | 600 TB × replicas | 100 GB/s | staged over hours |
 
@@ -256,7 +256,7 @@ ingress        = 38,000 × 100 KB     ≈ 3.8 GB/s ≈ 30 Gbps sustained
 
 ---
 
-## 3.8 Latency arithmetic — is 300 ms even possible?
+## 3.8 Latency arithmetic: is 300 ms even possible?
 
 Let us verify the SLO is not fantasy, using standard latency numbers.
 
@@ -287,7 +287,7 @@ Blend + serialize + render                            ~20 ms
 Total                                                 ~212 ms
 ```
 
-It fits — with **~90 ms of headroom** for the p99 tail. Two observations that drive later chapters:
+It fits, with **~90 ms of headroom** for the p99 tail. Two observations that drive later chapters:
 
 - **The cross-continent round trip (150 ms) does not appear.** That is not luck; it is why serving must be *geographically replicated*. A globally centralised index cannot meet this SLO no matter how fast the software is. Geography is the constraint, not code.
 - **The single largest controllable slice is L3 neural re-ranking.** It is also the largest quality lever. The entire retrieval funnel in [Chapter 08](08-ranking.md) exists to reduce the number of documents that reach L3 to a few dozen, so the expensive model can be afforded at all.

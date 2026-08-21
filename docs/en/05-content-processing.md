@@ -12,11 +12,11 @@
 
 ## 5.1 From bytes to indexable signal
 
-The crawler hands over compressed HTML. The indexer needs clean tokens, per-document features, and a link graph. Everything in between is content processing — the least glamorous and most quality-determining stage in the pipeline.
+The crawler hands over compressed HTML. The indexer needs clean tokens, per-document features, and a link graph. Everything in between is content processing: the least glamorous and most quality-determining stage in the pipeline.
 
 Its importance is easy to underrate. **A ranking model can only rank what the processor extracted.** If boilerplate stripping keeps the navigation menu, every page on a site looks identical for its nav terms. If language detection is wrong, the wrong tokenizer runs and the document becomes unfindable. Errors here are silent, systematic, and invisible to A/B tests that only measure the ranking layer.
 
-> **Diagram D-21 — Content processing pipeline**
+> **Diagram D-21 · Content processing pipeline**
 
 ```mermaid
 flowchart TB
@@ -34,7 +34,7 @@ flowchart TB
 
     HTML --> DOM["DOM tree"]
     DOM --> JS{"Requires JS<br/>rendering?"}
-    JS -->|"Yes"| REND["Headless render queue<br/>expensive — budgeted"]
+    JS -->|"Yes"| REND["Headless render queue<br/>expensive: budgeted"]
     JS -->|"No"| STRUCT
     REND --> STRUCT["Structural analysis"]
 
@@ -75,7 +75,7 @@ flowchart TB
 
 ## 5.2 Parsing HTML you did not write
 
-Real-world HTML is broken. Unclosed tags, mismatched nesting, invalid character references, and 40 MB of inline JSON are all normal. The parser must be **error-tolerant in exactly the way browsers are** — because if your parser reads a document differently from Chrome, you index something the user will never see.
+Real-world HTML is broken. Unclosed tags, mismatched nesting, invalid character references, and 40 MB of inline JSON are all normal. The parser must be **error-tolerant in exactly the way browsers are**, because if your parser reads a document differently from Chrome, you index something the user will never see.
 
 | Hazard | Handling |
 |---|---|
@@ -83,7 +83,7 @@ Real-world HTML is broken. Unclosed tags, mismatched nesting, invalid character 
 | Wrong or missing charset | Header → BOM → `<meta charset>` → statistical detection, in that order |
 | Enormous documents | Hard cap (e.g. 10 MB parsed); truncate, do not fail |
 | Deeply nested DOM | Depth cap; malformed nesting is a spam signal |
-| Content injected by JavaScript | Route to a rendering queue — but only for a budgeted subset |
+| Content injected by JavaScript | Route to a rendering queue, but only for a budgeted subset |
 | `<noscript>` / hidden text | Extract but flag; hidden text is a classic spam vector |
 | Frames and iframes | Follow as separate documents, not as inline content |
 
@@ -113,30 +113,30 @@ This is why JavaScript-heavy sites are indexed later and less completely than se
 
 ---
 
-## 5.3 Boilerplate removal — finding the actual content
+## 5.3 Boilerplate removal: finding the actual content
 
 An average web page is mostly *not* its content. Navigation, headers, footers, sidebars, cookie banners, related-article widgets and advertising can be 80 % of the tokens. Indexing them causes two concrete failures:
 
 1. **Every page on a site looks the same** for the terms in its shared chrome, destroying intra-site discrimination.
-2. **Ranking signals are diluted** — term frequencies are dominated by template text rather than subject matter.
+2. **Ranking signals are diluted**: term frequencies are dominated by template text rather than subject matter.
 
-> **Diagram D-22 — Main-content extraction**
+> **Diagram D-22 · Main-content extraction**
 
 ```mermaid
 flowchart TB
     DOM["Parsed DOM tree"]
 
-    DOM --> B1["Signal 1 — Text density<br/>text chars ÷ tag count per block"]
-    DOM --> B2["Signal 2 — Link density<br/>anchor text ÷ total text<br/>high ⇒ navigation"]
-    DOM --> B3["Signal 3 — Structural role<br/>main · article · nav · footer · aside"]
-    DOM --> B4["Signal 4 — Cross-page templates<br/>blocks identical across the site"]
-    DOM --> B5["Signal 5 — Visual position<br/>from render, when available"]
-    DOM --> B6["Signal 6 — Repetition entropy<br/>low-entropy blocks are chrome"]
+    DOM --> B1["Signal 1: Text density<br/>text chars ÷ tag count per block"]
+    DOM --> B2["Signal 2: Link density<br/>anchor text ÷ total text<br/>high ⇒ navigation"]
+    DOM --> B3["Signal 3: Structural role<br/>main · article · nav · footer · aside"]
+    DOM --> B4["Signal 4: Cross-page templates<br/>blocks identical across the site"]
+    DOM --> B5["Signal 5: Visual position<br/>from render, when available"]
+    DOM --> B6["Signal 6: Repetition entropy<br/>low-entropy blocks are chrome"]
 
     B1 & B2 & B3 & B4 & B5 & B6 --> CLS["Block classifier<br/>per DOM subtree"]
 
     CLS --> MAIN["🟢 Main content<br/>full weight"]
-    CLS --> SUPP["🟡 Supplementary<br/>captions, tables — reduced weight"]
+    CLS --> SUPP["🟡 Supplementary<br/>captions, tables: reduced weight"]
     CLS --> CHROME["🔴 Boilerplate<br/>dropped from body index"]
 
     MAIN --> FIELDS["Field-weighted representation"]
@@ -153,7 +153,7 @@ flowchart TB
     class CHROME drop
 ```
 
-**Signal 4 is the most powerful and the most often forgotten.** If you have crawled 10,000 pages from one host, the blocks that are byte-identical across all of them are, by definition, template. Cross-page differencing beats any per-page heuristic — but it only works because you crawl whole sites, not isolated pages. It is a good example of a capability that emerges from scale rather than from cleverness.
+**Signal 4 is the most powerful and the most often forgotten.** If you have crawled 10,000 pages from one host, the blocks that are byte-identical across all of them are, by definition, template. Cross-page differencing beats any per-page heuristic, but it only works because you crawl whole sites, not isolated pages. It is a good example of a capability that emerges from scale rather than from cleverness.
 
 ---
 
@@ -173,11 +173,11 @@ The practical stack: **script detection first** (it resolves Arabic, Chinese, Ja
 
 ---
 
-## 5.5 Tokenization is language-specific — a worked comparison
+## 5.5 Tokenization is language-specific: a worked comparison
 
 This is where a genuinely global search engine gets hard, and where a bilingual document like this one can be most useful.
 
-> **Diagram D-23 — Language-specific tokenization paths**
+> **Diagram D-23 · Language-specific tokenization paths**
 
 ```mermaid
 flowchart TB
@@ -222,7 +222,7 @@ flowchart TB
 | **Optional diacritics** | `كتب` may be *kataba* (he wrote), *kutub* (books), or *kutiba* (it was written). The written form is identical; the index must either normalise away diacritics entirely or handle several readings. |
 | **Root-and-pattern morphology** | One triliteral root ك-ت-ب generates كتاب، كاتب، مكتبة، مكتوب، كتابة. Suffix-stripping stemmers (Porter-style) fail; you need either light stemming or a real morphological analyser. |
 | **Agglutinative clitics** | `وبالمكتبة` = و + ب + ال + مكتبة ("and at the library") is one orthographic token containing four morphemes. Without clitic segmentation, the query مكتبة will not match it. |
-| **Orthographic variation** | أحمد / احمد, مكتبة / مكتبه — writers are inconsistent. Normalisation must collapse these, at the cost of some precision. |
+| **Orthographic variation** | أحمد / احمد, مكتبة / مكتبه، writers are inconsistent. Normalisation must collapse these, at the cost of some precision. |
 | **Bidirectional text** | Mixed Arabic-Latin content requires correct handling of Unicode bidi control characters, which are also a cloaking vector. |
 | **Arabic-Indic digits** | ٢٠٢٦ and 2026 mean the same thing and must be unified. |
 
@@ -232,9 +232,9 @@ flowchart TB
 
 ## 5.6 The link graph
 
-Outlinks are extracted during parsing and accumulated into a global graph — arguably the single most valuable derived asset in the whole system, since it powers PageRank, anchor-text indexing, spam detection and crawl prioritisation simultaneously.
+Outlinks are extracted during parsing and accumulated into a global graph: arguably the single most valuable derived asset in the whole system, since it powers PageRank, anchor-text indexing, spam detection and crawl prioritisation simultaneously.
 
-> **Diagram D-24 — Link graph and derived document data model**
+> **Diagram D-24 · Link graph and derived document data model**
 
 ```mermaid
 erDiagram
@@ -322,12 +322,12 @@ erDiagram
     }
 ```
 
-### Anchor text — describing a page in other people's words
+### Anchor text: describing a page in other people's words
 
 The text inside a link (`<a href="...">click here for the tutorial</a>`) is a description of the *target* page written by a third party. This is extraordinarily valuable:
 
 - It describes pages in the **vocabulary users actually search with**, not the vocabulary the page author chose.
-- It works for documents whose own text is unindexable — images, videos, PDFs, JavaScript apps.
+- It works for documents whose own text is unindexable: images, videos, PDFs, JavaScript apps.
 - It aggregates many independent opinions about what a page is about.
 
 It is also the **single most abused signal on the web**, because anyone can write a link to your page saying anything. Defences: cap contribution per source domain, weight by the source's own trust score, discount `rel="nofollow"` / `rel="ugc"` / `rel="sponsored"`, and require diversity across distinct registrable domains before a phrase counts. See [Chapter 14](14-security-abuse.md).
@@ -348,13 +348,13 @@ Not every fetched document deserves an index entry. Cheap classifiers run at pro
 | **Page structure quality** | Ad-to-content ratio, layout stability | Page-experience signals |
 | **Topical classification** | Subject area | Vertical routing, freshness policy |
 
-**Order matters for cost.** These run *before* index construction so that documents scoring badly enough are never indexed at all — saving index bytes, which [Chapter 03](03-capacity-estimation.md) showed is the dominant cost in the system.
+**Order matters for cost.** These run *before* index construction so that documents scoring badly enough are never indexed at all: saving index bytes, which [Chapter 03](03-capacity-estimation.md) showed is the dominant cost in the system.
 
 ---
 
 ## 5.8 The processed-document contract
 
-> **Diagram D-25 — Document state through processing**
+> **Diagram D-25 · Document state through processing**
 
 ```mermaid
 stateDiagram-v2
@@ -366,7 +366,7 @@ stateDiagram-v2
     Decoded --> Parsed: DOM built
     Decoded --> RenderQueued: JS-dependent and worth rendering
     RenderQueued --> Parsed: headless render complete
-    RenderQueued --> Parsed: render timeout — use static DOM
+    RenderQueued --> Parsed: render timeout · use static DOM
 
     Parsed --> Extracted: boilerplate removed, fields segmented
     Extracted --> Tokenized: language detected, tokens emitted
@@ -388,7 +388,7 @@ stateDiagram-v2
         A duplicate is not discarded.
         Its inbound links and anchor text
         are merged into the canonical
-        document — otherwise mirrors
+        document: otherwise mirrors
         would silently destroy PageRank.
     end note
 ```
@@ -398,7 +398,7 @@ The output contract consumed by the index builder:
 | Field | Purpose |
 |---|---|
 | `docid` | Stable 64-bit id, assigned by hash of canonical URL |
-| `tokens[]` | Token, field tag, position — the raw material of the inverted index |
+| `tokens[]` | Token, field tag, position: the raw material of the inverted index |
 | `title`, `meta` | Displayed on the SERP, weighted heavily in ranking |
 | `main_text` | Boilerplate-stripped body, kept for snippet generation |
 | `language`, `locale` | Routing and matching |

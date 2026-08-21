@@ -3,8 +3,8 @@ stateDiagram-v2
 
     Unknown --> FetchingRobots: first URL for this host
     FetchingRobots --> RobotsOK: 200, parsed
-    FetchingRobots --> RobotsMissing: 404 — allow all
-    FetchingRobots --> RobotsDenyAll: 5xx or timeout — assume disallow
+    FetchingRobots --> RobotsMissing: 404 · allow all
+    FetchingRobots --> RobotsDenyAll: 5xx or timeout · assume disallow
     FetchingRobots --> RobotsDenyAll: explicit Disallow /
 
     RobotsOK --> Idle: crawl-delay recorded
@@ -13,7 +13,7 @@ stateDiagram-v2
 
     Idle --> Eligible: now >= next_fetch_time
     Eligible --> Fetching: worker acquires host lease
-    Fetching --> Idle: success — next_fetch_time = now + delay
+    Fetching --> Idle: success · next_fetch_time = now + delay
 
     Fetching --> Backoff: 429 or 503
     Fetching --> Backoff: latency above threshold

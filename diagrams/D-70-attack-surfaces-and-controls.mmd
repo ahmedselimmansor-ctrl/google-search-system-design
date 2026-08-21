@@ -1,7 +1,7 @@
 flowchart TB
     subgraph SURFACES["Attack surfaces"]
         S1["🌐 Public query endpoint<br/>the only unauthenticated<br/>public entry point"]
-        S2["🕷️ Crawler fetching<br/>hostile content<br/>— we execute attacker input"]
+        S2["🕷️ Crawler fetching<br/>hostile content<br/>we execute attacker input"]
         S3["🖥️ Headless rendering<br/>we run attacker JavaScript"]
         S4["📤 Push/indexing APIs<br/>authenticated but<br/>attacker-operated"]
         S5["🔧 Internal control plane"]
@@ -10,11 +10,11 @@ flowchart TB
 
     S1 --> C1["Rate limiting per IP, subnet, ASN<br/>Bot detection and challenges<br/>Query complexity limits<br/>Strict input validation<br/>DDoS absorption at the edge"]
 
-    S2 --> C2["Parse in a sandbox — assume<br/>every parser has bugs<br/>Size and depth caps<br/>Decompression-bomb limits<br/>Aggressive timeouts<br/>No credentials in the fetcher<br/>Egress restrictions — a crawler<br/>must never reach internal networks"]
+    S2 --> C2["Parse in a sandbox: assume<br/>every parser has bugs<br/>Size and depth caps<br/>Decompression-bomb limits<br/>Aggressive timeouts<br/>No credentials in the fetcher<br/>Egress restrictions: a crawler<br/>must never reach internal networks"]
 
     S3 --> C3["Strong isolation: separate VM/container<br/>per render, destroyed after use<br/>No network access to internal services<br/>Hard CPU/memory/time budgets<br/>Treat as fully compromised by default"]
 
-    S4 --> C4["Verify domain ownership<br/>Per-site quotas<br/>Never trust a submission —<br/>always fetch and verify independently<br/>Full audit log"]
+    S4 --> C4["Verify domain ownership<br/>Per-site quotas<br/>Never trust a submission:<br/>always fetch and verify independently<br/>Full audit log"]
 
     S5 --> C5["Mutual TLS between services<br/>Least-privilege service identity<br/>Two-person review for global changes<br/>Immutable audit trail"]
 

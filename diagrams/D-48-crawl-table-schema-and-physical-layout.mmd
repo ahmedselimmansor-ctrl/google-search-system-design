@@ -1,10 +1,10 @@
 flowchart TB
-    subgraph LOGICAL["Logical model — sparse multidimensional map"]
+    subgraph LOGICAL["Logical model: sparse multidimensional map"]
         RK["Row key: REVERSED hostname + path<br/>com.example.www/products/item-42<br/><br/>⚠️ Reversal is the critical trick:<br/>all pages of one site sort together,<br/>so a site scan is a contiguous range read"]
 
-        RK --> CF1["Column family: contents<br/>contents:html @ t1, t2, t3<br/>(versioned — keeps crawl history)"]
+        RK --> CF1["Column family: contents<br/>contents:html @ t1, t2, t3<br/>(versioned · keeps crawl history)"]
         RK --> CF2["Column family: metadata<br/>metadata:fetch_time<br/>metadata:http_status<br/>metadata:content_hash<br/>metadata:simhash<br/>metadata:language"]
-        RK --> CF3["Column family: anchor<br/>anchor:com.cnn.www = 'CNN homepage'<br/>anchor:com.bbc = 'see also'<br/>(one column per linking site —<br/>sparse, unbounded, no schema change)"]
+        RK --> CF3["Column family: anchor<br/>anchor:com.cnn.www = 'CNN homepage'<br/>anchor:com.bbc = 'see also'<br/>(one column per linking site:<br/>sparse, unbounded, no schema change)"]
         RK --> CF4["Column family: signals<br/>signals:pagerank<br/>signals:spam_score<br/>signals:quality"]
     end
 
@@ -15,12 +15,12 @@ flowchart TB
         T --> TB3[("Tablet N<br/>…")]
 
         TB1 --> TS["Tablet server owns tablet<br/>splits when too large,<br/>merges when too small"]
-        TS --> MEM["Memtable — sorted, in RAM<br/>absorbs all writes"]
+        TS --> MEM["Memtable: sorted, in RAM<br/>absorbs all writes"]
         TS --> WAL["Write-ahead log on DFS<br/>durability before ack"]
-        MEM -->|"flush"| SST1[("SSTable 1 — immutable")]
-        MEM -->|"flush"| SST2[("SSTable 2 — immutable")]
+        MEM -->|"flush"| SST1[("SSTable 1: immutable")]
+        MEM -->|"flush"| SST2[("SSTable 2: immutable")]
         SST1 & SST2 -->|"compaction"| SST3[("Merged SSTable")]
-        SST3 --> DFS[("All SSTables live on the<br/>distributed file system —<br/>tablet servers hold NO durable state")]
+        SST3 --> DFS[("All SSTables live on the<br/>distributed file system:<br/>tablet servers hold NO durable state")]
     end
 
     LOGICAL --> PHYSICAL

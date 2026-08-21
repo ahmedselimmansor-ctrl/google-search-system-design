@@ -1,40 +1,40 @@
 flowchart TB
-    subgraph L7["Layer 7 — Product Surface"]
+    subgraph L7["Layer 7: Product Surface"]
         P1["SERP rendering"]
         P2["Autocomplete"]
         P3["Knowledge panels · answers"]
         P4["Verticals: images, news, video"]
     end
 
-    subgraph L6["Layer 6 — Relevance"]
+    subgraph L6["Layer 6: Relevance"]
         R1["Query understanding"]
         R2["Retrieval funnel"]
         R3["Learning-to-rank models"]
         R4["Personalization & locale"]
     end
 
-    subgraph L5["Layer 5 — Serving"]
+    subgraph L5["Layer 5: Serving"]
         S1["Mixer / blender"]
         S2["Root & leaf index servers"]
         S3["Snippet generators"]
         S4["Multi-level caches"]
     end
 
-    subgraph L4["Layer 4 — Index"]
+    subgraph L4["Layer 4: Index"]
         I1["Inverted index shards"]
         I2["Forward index / attachments"]
         I3["Index tiering hot·warm·cold"]
         I4["Index build & merge pipeline"]
     end
 
-    subgraph L3["Layer 3 — Corpus"]
+    subgraph L3["Layer 3: Corpus"]
         C1["Crawler fleet"]
         C2["Content processing"]
         C3["Link graph"]
         C4["Document store"]
     end
 
-    subgraph L2["Layer 2 — Platform"]
+    subgraph L2["Layer 2: Platform"]
         PL1["Distributed file system"]
         PL2["Wide-column store"]
         PL3["Coordination / locking"]
@@ -42,7 +42,7 @@ flowchart TB
         PL5["Cluster scheduler"]
     end
 
-    subgraph L1["Layer 1 — Physical"]
+    subgraph L1["Layer 1: Physical"]
         H1["Commodity servers"]
         H2["Datacenter network fabric"]
         H3["Global WAN backbone"]

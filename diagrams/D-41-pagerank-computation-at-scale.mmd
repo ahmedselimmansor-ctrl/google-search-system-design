@@ -19,7 +19,7 @@ flowchart TB
     CONV -->|"Yes"| POST["Post-processing"]
 
     POST --> P1["Handle dangling nodes<br/>pages with no outlinks<br/>redistribute their mass uniformly"]
-    POST --> P2["Log-scale and bucket<br/>into a small integer<br/>— only relative order matters"]
+    POST --> P2["Log-scale and bucket<br/>into a small integer<br/>only relative order matters"]
     POST --> P3["Compute host-level<br/>and domain-level aggregates"]
 
     P1 & P2 & P3 --> OUT[("Per-document authority score<br/>→ stored in doc attachments<br/>→ shipped with the index")]

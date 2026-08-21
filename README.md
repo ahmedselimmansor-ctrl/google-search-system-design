@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔍 Google Search — System Design & Architecture
+# 🔍 Google Search: System Design & Architecture
 
 ### A deep, diagram-first walkthrough of how a planet-scale web search engine is built
 
@@ -16,9 +16,9 @@
 
 ---
 
-> **English** — This repository reconstructs, from first principles and published research, the architecture of a web-scale search engine: crawling, indexing, ranking, serving, storage, reliability and abuse defence. Every subsystem is explained in prose **and** drawn as a Mermaid diagram that renders directly on GitHub.
+> **English**: This repository reconstructs, from first principles and published research, the architecture of a web-scale search engine: crawling, indexing, ranking, serving, storage, reliability and abuse defence. Every subsystem is explained in prose **and** drawn as a Mermaid diagram that renders directly on GitHub.
 >
-> **العربية** — يعيد هذا المستودع بناء معمارية محرك بحث بحجم الويب من المبادئ الأولى والأبحاث المنشورة: الزحف، والفهرسة، والترتيب، والخدمة، والتخزين، والموثوقية، والدفاع ضد إساءة الاستخدام. كل نظام فرعي مشروح نصيًا **ومرسوم** بمخطط Mermaid يُعرض مباشرة على GitHub. 👈 [**اقرأ النسخة العربية الكاملة**](README.ar.md)
+> **العربية**: يعيد هذا المستودع بناء معمارية محرك بحث بحجم الويب من المبادئ الأولى والأبحاث المنشورة: الزحف، والفهرسة، والترتيب، والخدمة، والتخزين، والموثوقية، والدفاع ضد إساءة الاستخدام. كل نظام فرعي مشروح نصيًا **ومرسوم** بمخطط Mermaid يُعرض مباشرة على GitHub. 👈 [**اقرأ النسخة العربية الكاملة**](README.ar.md)
 
 ---
 
@@ -40,7 +40,7 @@
 
 ## 🎯 What this is (and is not)
 
-**This is** an educational, engineering-grade system design study. It is built from publicly available material — Google's own published papers (GFS, MapReduce, Bigtable, Spanner, Percolator, Dapper, Borg, Maglev), academic information-retrieval literature, and public engineering talks — combined into one coherent, teachable architecture.
+**This is** an educational, engineering-grade system design study. It is built from publicly available material: Google's own published papers (GFS, MapReduce, Bigtable, Spanner, Percolator, Dapper, Borg, Maglev), academic information-retrieval literature, and public engineering talks: combined into one coherent, teachable architecture.
 
 **This is not** a leak, an internal document, or a claim about how Google's production systems are wired *today*. Real internals are proprietary and have evolved far beyond the published papers. Every number in this repo is an **order-of-magnitude estimate** used for capacity reasoning, clearly marked as such.
 
@@ -50,7 +50,7 @@ Use it to learn, to prepare for system design interviews, to teach, or as a refe
 
 ## 🌍 The 30,000-foot view
 
-> **Diagram D-01 — End-to-end system context**
+> **Diagram D-01 · End-to-end system context**
 
 ```mermaid
 flowchart TB
@@ -58,19 +58,19 @@ flowchart TB
         SITES["~200B+ known URLs<br/>HTML · PDF · Video · Feeds"]
     end
 
-    subgraph INGEST["① INGESTION — offline, continuous"]
+    subgraph INGEST["① INGESTION: offline, continuous"]
         CRAWL["Crawler Fleet<br/>fetch · robots · politeness"]
         PROC["Content Processing<br/>parse · normalize · dedup"]
         LINK["Link Graph Builder<br/>PageRank · anchors"]
     end
 
-    subgraph BUILD["② INDEX CONSTRUCTION — batch + streaming"]
+    subgraph BUILD["② INDEX CONSTRUCTION: batch + streaming"]
         DOCDB[("Document Store<br/>Bigtable-like")]
         IDX["Index Builder<br/>MapReduce · compaction"]
         SHARDS[("Inverted Index<br/>thousands of shards")]
     end
 
-    subgraph SERVE["③ SERVING — online, p99 &lt; 300 ms"]
+    subgraph SERVE["③ SERVING: online, p99 &lt; 300 ms"]
         FE["Frontend / GSLB"]
         QU["Query Understanding"]
         MIX["Mixer / Blender"]
@@ -113,23 +113,23 @@ The whole engine is three pipelines glued by two storage systems. Everything els
 
 ## 🔄 The three loops
 
-A search engine is not one pipeline — it is **three loops running at wildly different clock speeds**. Confusing them is the single most common mistake in system design interviews.
+A search engine is not one pipeline: it is **three loops running at wildly different clock speeds**. Confusing them is the single most common mistake in system design interviews.
 
-> **Diagram D-02 — The three clock speeds**
+> **Diagram D-02 · The three clock speeds**
 
 ```mermaid
 flowchart LR
-    subgraph L1["🐢 Loop 1 — Discovery · days to weeks"]
+    subgraph L1["🐢 Loop 1: Discovery · days to weeks"]
         direction TB
         A1["Crawl the web"] --> A2["Extract links"] --> A3["Recompute link graph"] --> A1
     end
 
-    subgraph L2["🐇 Loop 2 — Freshness · seconds to minutes"]
+    subgraph L2["🐇 Loop 2: Freshness · seconds to minutes"]
         direction TB
         B1["Detect changed page"] --> B2["Incremental index update"] --> B3["Push to serving tier"] --> B1
     end
 
-    subgraph L3["⚡ Loop 3 — Query · &lt; 300 milliseconds"]
+    subgraph L3["⚡ Loop 3: Query · &lt; 300 milliseconds"]
         direction TB
         C1["Understand query"] --> C2["Retrieve candidates"] --> C3["Rank & blend"] --> C4["Render SERP"]
     end
@@ -148,15 +148,15 @@ flowchart LR
 
 | Loop | Latency budget | Optimised for | Failure tolerance |
 |---|---|---|---|
-| **Discovery** | days → weeks | throughput, coverage | very high — retry tomorrow |
-| **Freshness** | seconds → minutes | low write amplification | high — stale is survivable |
-| **Query** | < 300 ms p99 | tail latency, availability | ~zero — degrade, never fail |
+| **Discovery** | days → weeks | throughput, coverage | very high: retry tomorrow |
+| **Freshness** | seconds → minutes | low write amplification | high: stale is survivable |
+| **Query** | < 300 ms p99 | tail latency, availability | ~zero: degrade, never fail |
 
 ---
 
 ## 🗺️ The whole system as one map
 
-> **Diagram D-03 — Mindmap of every subsystem covered in this repo**
+> **Diagram D-03 · Mindmap of every subsystem covered in this repo**
 
 ```mermaid
 mindmap
@@ -244,7 +244,7 @@ Each chapter exists in **English** and **Arabic**. Read them in order for a full
 
 ## 📊 Numbers at a glance
 
-All figures are **public-domain order-of-magnitude estimates** for reasoning about scale — not measured Google values. Full derivations in [Chapter 03](docs/en/03-capacity-estimation.md).
+All figures are **public-domain order-of-magnitude estimates** for reasoning about scale, not measured Google values. Full derivations in [Chapter 03](docs/en/03-capacity-estimation.md).
 
 | Quantity | Working estimate | Why it matters |
 |---|---:|---|
@@ -292,7 +292,7 @@ flowchart LR
 
 ## 🛠️ Rendering the diagrams locally
 
-GitHub renders Mermaid natively — you do not need to do anything to read this repo. If you want PNG/SVG exports (for slides, print, or a talk):
+GitHub renders Mermaid natively: you do not need to do anything to read this repo. If you want PNG/SVG exports (for slides, print, or a talk):
 
 ```bash
 npm install -g @mermaid-js/mermaid-cli
@@ -316,22 +316,22 @@ This architecture is synthesised from public material. Primary references:
 
 | Paper / Talk | Year | What it grounds |
 |---|:--:|---|
-| Brin & Page — *The Anatomy of a Large-Scale Hypertextual Web Search Engine* | 1998 | Original crawler, index and PageRank |
-| Barroso, Dean, Hölzle — *Web Search for a Planet* | 2003 | Cluster architecture, commodity hardware thesis |
-| Ghemawat et al. — *The Google File System* | 2003 | Append-oriented distributed storage |
-| Dean & Ghemawat — *MapReduce* | 2004 | Batch index construction |
-| Chang et al. — *Bigtable* | 2006 | Wide-column crawl and document store |
-| Burrows — *The Chubby Lock Service* | 2006 | Coordination, leader election |
-| Dean — *Challenges in Building Large-Scale IR Systems* | 2009 | Index tiering, serving evolution |
-| Peng & Dabek — *Percolator* | 2010 | Incremental indexing, freshness |
-| Sigelman et al. — *Dapper* | 2010 | Distributed tracing |
-| Corbett et al. — *Spanner* | 2012 | Globally consistent metadata |
-| Dean & Barroso — *The Tail at Scale* | 2013 | Tail latency mitigation |
-| Verma et al. — *Borg* | 2015 | Cluster scheduling |
-| Singh et al. — *Jupiter Rising* | 2015 | Datacenter network fabric |
-| Eisenbud et al. — *Maglev* | 2016 | Software load balancing |
+| Brin & Page, *The Anatomy of a Large-Scale Hypertextual Web Search Engine* | 1998 | Original crawler, index and PageRank |
+| Barroso, Dean, Hölzle, *Web Search for a Planet* | 2003 | Cluster architecture, commodity hardware thesis |
+| Ghemawat et al., *The Google File System* | 2003 | Append-oriented distributed storage |
+| Dean & Ghemawat, *MapReduce* | 2004 | Batch index construction |
+| Chang et al., *Bigtable* | 2006 | Wide-column crawl and document store |
+| Burrows, *The Chubby Lock Service* | 2006 | Coordination, leader election |
+| Dean, *Challenges in Building Large-Scale IR Systems* | 2009 | Index tiering, serving evolution |
+| Peng & Dabek, *Percolator* | 2010 | Incremental indexing, freshness |
+| Sigelman et al., *Dapper* | 2010 | Distributed tracing |
+| Corbett et al., *Spanner* | 2012 | Globally consistent metadata |
+| Dean & Barroso, *The Tail at Scale* | 2013 | Tail latency mitigation |
+| Verma et al., *Borg* | 2015 | Cluster scheduling |
+| Singh et al., *Jupiter Rising* | 2015 | Datacenter network fabric |
+| Eisenbud et al., *Maglev* | 2016 | Software load balancing |
 
-Full annotated bibliography: [Chapter 17 — Glossary & Sources](docs/en/17-glossary.md).
+Full annotated bibliography: [Chapter 17; Glossary & Sources](docs/en/17-glossary.md).
 
 ---
 
@@ -339,7 +339,7 @@ Full annotated bibliography: [Chapter 17 — Glossary & Sources](docs/en/17-glos
 
 Corrections, better diagrams and Arabic-language improvements are all welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-If you find a factual error — especially one where I have over-claimed about real Google internals — please open an issue. Accuracy about *what is public* matters more here than completeness.
+If you find a factual error (especially one where I have over-claimed about real Google internals) please open an issue. Accuracy about *what is public* matters more here than completeness.
 
 ---
 

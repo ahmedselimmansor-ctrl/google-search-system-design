@@ -5,7 +5,7 @@ flowchart TB
         U3["🌏 APAC"]
     end
 
-    subgraph EDGE["Edge / PoP layer — 100s of locations"]
+    subgraph EDGE["Edge / PoP layer: 100s of locations"]
         E1["TLS termination<br/>TCP + QUIC handshakes<br/>close to the user"]
         E2["Static asset serving"]
         E3["Anycast IP absorption"]
@@ -13,7 +13,7 @@ flowchart TB
 
     U1 & U2 & U3 --> E1
 
-    subgraph REGIONS["Serving regions — each independently complete"]
+    subgraph REGIONS["Serving regions: each independently complete"]
         subgraph R1["Region: Americas"]
             R1C1["Cell A1"]
             R1C2["Cell A2"]
@@ -31,7 +31,7 @@ flowchart TB
 
     E1 --> R1 & R2 & R3
 
-    subgraph CELL["What a cell contains — a complete, independent search stack"]
+    subgraph CELL["What a cell contains: a complete, independent search stack"]
         C1["Frontends + mixers"]
         C2["Full index replica<br/>all tiers, all shards"]
         C3["Ranking tier + accelerators"]
@@ -41,7 +41,7 @@ flowchart TB
 
     R1C1 -.is.-> CELL
 
-    subgraph GLOBAL["Global services — small, strongly consistent"]
+    subgraph GLOBAL["Global services: small, strongly consistent"]
         G1["Index version coordination"]
         G2["Legal removal rules"]
         G3["Global traffic manager"]

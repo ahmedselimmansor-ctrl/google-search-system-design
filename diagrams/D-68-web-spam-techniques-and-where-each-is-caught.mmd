@@ -1,7 +1,7 @@
 flowchart TB
     subgraph CONTENT["📄 Content spam"]
         C1["Keyword stuffing"]
-        C2["Hidden text — white on white,<br/>tiny fonts, off-screen CSS"]
+        C2["Hidden text: white on white,<br/>tiny fonts, off-screen CSS"]
         C3["Auto-generated / spun content"]
         C4["Scraped and republished content"]
         C5["Doorway pages"]
@@ -9,35 +9,35 @@ flowchart TB
     end
 
     subgraph LINK["🔗 Link spam"]
-        L1["Link farms — mutual linking networks"]
+        L1["Link farms: mutual linking networks"]
         L2["Paid links"]
         L3["Comment and forum spam"]
         L4["Private blog networks"]
-        L5["Expired-domain hijacking<br/>— buy a domain for its residual trust"]
-        L6["Negative SEO — point toxic links<br/>at a competitor"]
+        L5["Expired-domain hijacking<br/>buy a domain for its residual trust"]
+        L6["Negative SEO: point toxic links<br/>at a competitor"]
     end
 
     subgraph CLOAK["🎭 Deception"]
-        K1["Cloaking — different content<br/>served to crawler vs user"]
-        K2["Sneaky redirects — JS/meta redirect<br/>after the crawler leaves"]
+        K1["Cloaking: different content<br/>served to crawler vs user"]
+        K2["Sneaky redirects: JS/meta redirect<br/>after the crawler leaves"]
         K3["Hacked-site injection"]
         K4["Malware and phishing pages"]
         K5["Bidi/homoglyph tricks in<br/>titles and snippets"]
     end
 
-    CONTENT --> D1["🛡️ Layer 1 — Crawl time<br/>robots and pattern budgets ·<br/>infinite-space detection ·<br/>host and IP-block quotas"]
+    CONTENT --> D1["🛡️ Layer 1: Crawl time<br/>robots and pattern budgets ·<br/>infinite-space detection ·<br/>host and IP-block quotas"]
     LINK --> D1
     CLOAK --> D1
 
-    D1 --> D2["🛡️ Layer 2 — Processing time<br/>content classifiers ·<br/>hidden-text detection ·<br/>duplicate clustering ·<br/>language quality scoring"]
+    D1 --> D2["🛡️ Layer 2: Processing time<br/>content classifiers ·<br/>hidden-text detection ·<br/>duplicate clustering ·<br/>language quality scoring"]
 
-    D2 --> D3["🛡️ Layer 3 — Link graph analysis<br/>TrustRank propagation ·<br/>link-farm topology detection ·<br/>anchor-text diversity requirements ·<br/>discount nofollow/ugc/sponsored"]
+    D2 --> D3["🛡️ Layer 3: Link graph analysis<br/>TrustRank propagation ·<br/>link-farm topology detection ·<br/>anchor-text diversity requirements ·<br/>discount nofollow/ugc/sponsored"]
 
-    D3 --> D4["🛡️ Layer 4 — Index time<br/>demote or exclude ·<br/>tier assignment ·<br/>site-level penalties"]
+    D3 --> D4["🛡️ Layer 4: Index time<br/>demote or exclude ·<br/>tier assignment ·<br/>site-level penalties"]
 
-    D4 --> D5["🛡️ Layer 5 — Serving time<br/>final spam threshold ·<br/>host diversity limits ·<br/>SafeSearch and policy filters"]
+    D4 --> D5["🛡️ Layer 5: Serving time<br/>final spam threshold ·<br/>host diversity limits ·<br/>SafeSearch and policy filters"]
 
-    D5 --> D6["🛡️ Layer 6 — Feedback<br/>user spam reports ·<br/>manual review queues ·<br/>rater feedback into classifiers"]
+    D5 --> D6["🛡️ Layer 6: Feedback<br/>user spam reports ·<br/>manual review queues ·<br/>rater feedback into classifiers"]
 
     D6 -.retrains.-> D2
     D6 -.retunes.-> D3

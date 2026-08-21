@@ -12,7 +12,7 @@
 
 ## 1.1 The problem, stated honestly
 
-> *"Given an arbitrary sequence of characters typed by a human, return, within a quarter of a second, the ten most useful documents from a corpus of one hundred billion — while the corpus is changing underneath you, while a fraction of your machines are broken, and while a well-funded adversary is actively trying to poison the results."*
+> *"Given an arbitrary sequence of characters typed by a human, return, within a quarter of a second, the ten most useful documents from a corpus of one hundred billion, while the corpus is changing underneath you, while a fraction of your machines are broken, and while a well-funded adversary is actively trying to poison the results."*
 
 Every hard part of the system is already in that sentence. Let us decompose it.
 
@@ -20,7 +20,7 @@ Every hard part of the system is already in that sentence. Let us decompose it.
 |---|---|---|
 | *"a corpus of one hundred billion"* | Crawler + distributed storage | [04](04-crawling.md), [09](09-storage.md) |
 | *"arbitrary sequence of characters"* | Query understanding, spelling, synonyms | [07](07-serving.md) |
-| *"ten most useful"* | Ranking — the actual product | [08](08-ranking.md) |
+| *"ten most useful"* | Ranking: the actual product | [08](08-ranking.md) |
 | *"within a quarter of a second"* | Sharding, fan-out, caching, tail-latency work | [06](06-indexing.md), [07](07-serving.md), [10](10-caching.md) |
 | *"the corpus is changing underneath you"* | Incremental / real-time indexing | [11](11-freshness.md) |
 | *"a fraction of your machines are broken"* | Replication, degradation, DR | [12](12-reliability.md) |
@@ -32,9 +32,9 @@ This is the framing to open a system design interview with. It earns you the rig
 
 ## 1.2 Why the naïve design fails immediately
 
-The obvious design — "put the web in a database and run `LIKE '%query%'`" — fails on four independent axes, each by many orders of magnitude.
+The obvious design ("put the web in a database and run `LIKE '%query%'`") fails on four independent axes, each by many orders of magnitude.
 
-> **Diagram D-04 — Why the naïve design collapses**
+> **Diagram D-04 · Why the naïve design collapses**
 
 ```mermaid
 flowchart TB
@@ -63,10 +63,10 @@ flowchart TB
 
 Those four arrows on the right are, essentially, the four foundational ideas of the entire system:
 
-1. **Inversion** — never scan documents; scan a term-keyed structure instead.
-2. **Partitioning** — no single machine ever holds, or needs to hold, the whole corpus.
-3. **Learned relevance** — "useful" is a statistical function fit to human behaviour, not a boolean.
-4. **Append-only storage** — mutation at this scale is done by writing new data and merging later.
+1. **Inversion**: never scan documents; scan a term-keyed structure instead.
+2. **Partitioning**: no single machine ever holds, or needs to hold, the whole corpus.
+3. **Learned relevance**: "useful" is a statistical function fit to human behaviour, not a boolean.
+4. **Append-only storage**: mutation at this scale is done by writing new data and merging later.
 
 ---
 
@@ -74,46 +74,46 @@ Those four arrows on the right are, essentially, the four foundational ideas of 
 
 Zooming into the context diagram from the README, here is the layer stack. Read it bottom-up: each layer only depends on the ones below it.
 
-> **Diagram D-05 — Layered architecture**
+> **Diagram D-05 · Layered architecture**
 
 ```mermaid
 flowchart TB
-    subgraph L7["Layer 7 — Product Surface"]
+    subgraph L7["Layer 7: Product Surface"]
         P1["SERP rendering"]
         P2["Autocomplete"]
         P3["Knowledge panels · answers"]
         P4["Verticals: images, news, video"]
     end
 
-    subgraph L6["Layer 6 — Relevance"]
+    subgraph L6["Layer 6: Relevance"]
         R1["Query understanding"]
         R2["Retrieval funnel"]
         R3["Learning-to-rank models"]
         R4["Personalization & locale"]
     end
 
-    subgraph L5["Layer 5 — Serving"]
+    subgraph L5["Layer 5: Serving"]
         S1["Mixer / blender"]
         S2["Root & leaf index servers"]
         S3["Snippet generators"]
         S4["Multi-level caches"]
     end
 
-    subgraph L4["Layer 4 — Index"]
+    subgraph L4["Layer 4: Index"]
         I1["Inverted index shards"]
         I2["Forward index / attachments"]
         I3["Index tiering hot·warm·cold"]
         I4["Index build & merge pipeline"]
     end
 
-    subgraph L3["Layer 3 — Corpus"]
+    subgraph L3["Layer 3: Corpus"]
         C1["Crawler fleet"]
         C2["Content processing"]
         C3["Link graph"]
         C4["Document store"]
     end
 
-    subgraph L2["Layer 2 — Platform"]
+    subgraph L2["Layer 2: Platform"]
         PL1["Distributed file system"]
         PL2["Wide-column store"]
         PL3["Coordination / locking"]
@@ -121,7 +121,7 @@ flowchart TB
         PL5["Cluster scheduler"]
     end
 
-    subgraph L1["Layer 1 — Physical"]
+    subgraph L1["Layer 1: Physical"]
         H1["Commodity servers"]
         H2["Datacenter network fabric"]
         H3["Global WAN backbone"]
@@ -146,7 +146,7 @@ flowchart TB
     class P1,P2,P3,P4 prod
 ```
 
-**The key architectural insight:** layers 1–2 are *general infrastructure* — they are not search-specific at all. Google's most influential published work (GFS, MapReduce, Bigtable, Borg, Spanner) is almost entirely at layers 1–2. Search was the forcing function; the infrastructure was the durable output.
+**The key architectural insight:** layers 1–2 are *general infrastructure*; they are not search-specific at all. Google's most influential published work (GFS, MapReduce, Bigtable, Borg, Spanner) is almost entirely at layers 1–2. Search was the forcing function; the infrastructure was the durable output.
 
 ---
 
@@ -154,7 +154,7 @@ flowchart TB
 
 Before diving into subsystems, here is the whole online path in one sequence. Every arrow here gets its own chapter later.
 
-> **Diagram D-06 — Life of a query, end to end**
+> **Diagram D-06 · Life of a query, end to end**
 
 ```mermaid
 sequenceDiagram
@@ -204,7 +204,7 @@ sequenceDiagram
 
 Two things in this diagram deserve early attention, because they shape everything downstream:
 
-1. **The fan-out is total, not selective.** The root does not know which shards contain matches, so it asks *all* of them. This makes the query latency equal to the *slowest* shard's latency — the "tail at scale" problem, addressed in [Chapter 12](12-reliability.md).
+1. **The fan-out is total, not selective.** The root does not know which shards contain matches, so it asks *all* of them. This makes the query latency equal to the *slowest* shard's latency: the "tail at scale" problem, addressed in [Chapter 12](12-reliability.md).
 
 2. **The cache sits before the expensive work, not after.** A 40 % hit rate does not make the system 40 % faster; it makes it ~40 % *cheaper*, which is what pays for the ranking quality in the remaining 60 %.
 
@@ -214,7 +214,7 @@ Two things in this diagram deserve early attention, because they shape everythin
 
 Everything the offline half of the system does can be modelled as a single document moving through states.
 
-> **Diagram D-07 — Document lifecycle state machine**
+> **Diagram D-07 · Document lifecycle state machine**
 
 ```mermaid
 stateDiagram-v2

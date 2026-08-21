@@ -14,15 +14,15 @@
 
 The instinct is that caches make things fast. In this system they mostly make things **cheap**, and the distinction changes how you design them.
 
-From [Chapter 03](03-capacity-estimation.md): peak traffic is 3 × 10⁵ QPS, and a 40 % result-cache hit rate means only 1.8 × 10⁵ QPS reach the index. Without that cache the serving fleet would need to be ~67 % larger. The cache is not shaving milliseconds off an already-fast path — it is deleting two-thirds of a fleet's worth of hardware.
+From [Chapter 03](03-capacity-estimation.md): peak traffic is 3 × 10⁵ QPS, and a 40 % result-cache hit rate means only 1.8 × 10⁵ QPS reach the index. Without that cache the serving fleet would need to be ~67 % larger. The cache is not shaving milliseconds off an already-fast path: it is deleting two-thirds of a fleet's worth of hardware.
 
 This reframes the design question. It is not "how do we make cached queries faster?" but **"how do we maximise the fraction of traffic that never touches the index, without ever serving something wrong?"**
 
 ---
 
-## 10.2 Query traffic is extremely skewed — and that is what makes caching work
+## 10.2 Query traffic is extremely skewed, and that is what makes caching work
 
-> **Diagram D-51 — Query popularity distribution and cacheability**
+> **Diagram D-51 · Query popularity distribution and cacheability**
 
 ```mermaid
 flowchart TB
@@ -41,7 +41,7 @@ flowchart TB
 
     subgraph INSIGHT["The design consequence"]
         I1["Cache capacity should target the TORSO.<br/>The head fits in almost no memory;<br/>the tail is uncacheable by nature."]
-        I2["Admission policy matters more than eviction policy:<br/>do not admit a query on first sight —<br/>most tail queries are seen exactly once."]
+        I2["Admission policy matters more than eviction policy:<br/>do not admit a query on first sight:<br/>most tail queries are seen exactly once."]
     end
 
     classDef head fill:#fecaca,stroke:#b91c1c,color:#1c1917
@@ -62,7 +62,7 @@ flowchart TB
 
 There is no single cache. There are six, at different layers, with different keys, sizes and TTLs.
 
-> **Diagram D-52 — Multi-layer cache hierarchy**
+> **Diagram D-52 · Multi-layer cache hierarchy**
 
 ```mermaid
 flowchart TB
@@ -73,7 +73,7 @@ flowchart TB
 
     L2 -->|"miss"| L3["③ Result cache (SERP cache)<br/>key: normalized_query + locale +<br/>country + safesearch + device_class<br/>value: full ranked result set<br/>TTL: 5 min – 24 h by intent<br/>hit rate ~40% · THE BIG ONE"]
 
-    L3 -->|"miss"| L4["④ Query-understanding cache<br/>key: raw query string<br/>value: spelling, intent, expansion, embedding<br/>TTL: hours<br/>hit rate ~60% — cheap and very effective"]
+    L3 -->|"miss"| L4["④ Query-understanding cache<br/>key: raw query string<br/>value: spelling, intent, expansion, embedding<br/>TTL: hours<br/>hit rate ~60% · cheap and very effective"]
 
     L4 --> L5["⑤ Posting-list cache<br/>key: term id<br/>value: decompressed hot posting blocks<br/>on the leaf server, LFU<br/>hit rate ~85% for common terms"]
 
@@ -107,26 +107,26 @@ Every dimension added to the key multiplies the key space and divides the hit ra
 | Key | Approximate distinct keys | Hit rate impact |
 |---|---|---|
 | `query` | 10⁹ | Baseline |
-| `query + country` | 10⁹ × 200 | Necessary — results genuinely differ |
+| `query + country` | 10⁹ × 200 | Necessary: results genuinely differ |
 | `+ language` | × 50 | Necessary |
-| `+ safesearch` | × 2 | Necessary — correctness |
-| `+ device_class` | × 3 | Justifiable — layout differs |
+| `+ safesearch` | × 2 | Necessary: correctness |
+| `+ device_class` | × 3 | Justifiable: layout differs |
 | `+ city` | × 10⁴ | ❌ Destroys the cache |
 | `+ user_id` | × 10⁹ | ❌ Cache becomes pointless |
 
-This is the concrete mechanism behind the warning in [Chapter 08](08-ranking.md): **personalisation is expensive because it destroys cacheability**, not because personalising is computationally hard. The standard resolution is a **two-stage design** — cache the globally-computed result set under a coarse key, then apply light per-user reordering after the cache read. The expensive 200 ms of retrieval and ranking is shared; only the cheap final adjustment is per-user.
+This is the concrete mechanism behind the warning in [Chapter 08](08-ranking.md): **personalisation is expensive because it destroys cacheability**, not because personalising is computationally hard. The standard resolution is a **two-stage design**: cache the globally-computed result set under a coarse key, then apply light per-user reordering after the cache read. The expensive 200 ms of retrieval and ranking is shared; only the cheap final adjustment is per-user.
 
 ---
 
 ## 10.4 Invalidation
 
-> **Diagram D-53 — Cache coherence and invalidation paths**
+> **Diagram D-53 · Cache coherence and invalidation paths**
 
 ```mermaid
 flowchart TB
     subgraph TRIGGERS["What invalidates a cached SERP"]
         E1["New index version published"]
-        E2["Document removed — legal or policy"]
+        E2["Document removed: legal or policy"]
         E3["Breaking news detected for a topic"]
         E4["Ranking model rolled out"]
         E5["Natural TTL expiry"]
@@ -140,7 +140,7 @@ flowchart TB
     E5 --> S4{"Strategy"}
     E6 --> S2
 
-    S1 --> V["🏷️ Version-tagged keys<br/>cache key includes index_version<br/>publishing a new version makes<br/>every old entry unreachable —<br/>no explicit purge needed"]
+    S1 --> V["🏷️ Version-tagged keys<br/>cache key includes index_version<br/>publishing a new version makes<br/>every old entry unreachable:<br/>no explicit purge needed"]
 
     S2 --> P["📢 Active purge broadcast<br/>docid → cache tier<br/>must be FAST and RELIABLE<br/>this is the legal-compliance path"]
 
@@ -167,7 +167,7 @@ flowchart TB
     class F1,F2,F3 fix
 ```
 
-**Version-tagged keys are the elegant solution and should be the default.** Because index segments are immutable ([Chapter 06](06-indexing.md)), the live index has a version number. Including it in the cache key means a new index publish atomically invalidates the entire cache without sending a single purge message — old entries simply become unreachable and age out naturally. Immutability pays off a third time.
+**Version-tagged keys are the elegant solution and should be the default.** Because index segments are immutable ([Chapter 06](06-indexing.md)), the live index has a version number. Including it in the cache key means a new index publish atomically invalidates the entire cache without sending a single purge message: old entries simply become unreachable and age out naturally. Immutability pays off a third time.
 
 **But version tagging is not sufficient for legal removals.** Those cannot wait for the next index publish. They need the active purge path *and* a read-time deny-list backstop, because a purge message that is dropped silently produces a compliance violation rather than a stale result. This is a case where defence in depth is genuinely warranted: the fast path is the purge, and the correctness guarantee is the read-time check.
 
@@ -183,19 +183,19 @@ flowchart TB
 | Real-time data (live scores, stock prices) | Staleness is the failure, not an optimisation |
 | Anything keyed on partial user identity | Cache poisoning becomes cross-user data leakage |
 
-**Cache key collisions are a security vulnerability, not a bug.** If two different logical requests can map to the same cache key, one user can receive another's results. This is why the cache key must include *every* dimension that affects the response — including SafeSearch state and country, which are correctness dimensions rather than performance ones. The safe design principle: **when in doubt, add the dimension to the key and accept the lower hit rate.**
+**Cache key collisions are a security vulnerability, not a bug.** If two different logical requests can map to the same cache key, one user can receive another's results. This is why the cache key must include *every* dimension that affects the response: including SafeSearch state and country, which are correctness dimensions rather than performance ones. The safe design principle: **when in doubt, add the dimension to the key and accept the lower hit rate.**
 
 ---
 
 ## 10.6 Measuring cache effectiveness
 
-> **Diagram D-54 — Metrics that actually matter**
+> **Diagram D-54 · Metrics that actually matter**
 
 ```mermaid
 flowchart LR
     subgraph GOOD["✅ Metrics worth optimizing"]
         G1["Hit rate by layer<br/>and by query segment"]
-        G2["Cost avoided<br/>= hits × cost per index query<br/>THE metric — it is money"]
+        G2["Cost avoided<br/>= hits × cost per index query<br/>THE metric: it is money"]
         G3["Staleness distribution<br/>p50 / p99 age of served entries"]
         G4["Origin QPS reduction"]
         G5["Correctness incidents<br/>must be zero"]
@@ -210,7 +210,7 @@ flowchart LR
     G2 --> DECIDE{"Decision"}
     DECIDE --> D1["Add memory if<br/>marginal cost avoided ><br/>marginal RAM cost"]
     DECIDE --> D2["Lengthen TTL only if<br/>staleness stays within<br/>the intent's tolerance"]
-    DECIDE --> D3["Improve admission policy<br/>— usually the cheapest win"]
+    DECIDE --> D3["Improve admission policy<br/>usually the cheapest win"]
 
     classDef good fill:#bbf7d0,stroke:#15803d,color:#1c1917
     classDef bad fill:#fecaca,stroke:#b91c1c,color:#1c1917
@@ -218,7 +218,7 @@ flowchart LR
     class B1,B2,B3 bad
 ```
 
-**Hit rate alone is a trap.** You can raise it trivially by extending TTLs, which trades a metric improvement for silently staler results. The metric that cannot be gamed is **cost avoided per unit of staleness introduced** — and it must always be evaluated alongside the correctness-incident count, which has a hard target of zero.
+**Hit rate alone is a trap.** You can raise it trivially by extending TTLs, which trades a metric improvement for silently staler results. The metric that cannot be gamed is **cost avoided per unit of staleness introduced**, and it must always be evaluated alongside the correctness-incident count, which has a hard target of zero.
 
 ---
 

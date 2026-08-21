@@ -23,7 +23,7 @@ flowchart TB
     TR --> D5["Latency attribution"]
     TR --> D6["Dependency mapping"]
 
-    subgraph QUALITY["Search-specific signals — the ones generic APM misses"]
+    subgraph QUALITY["Search-specific signals: the ones generic APM misses"]
         Q1["Result quality: NDCG on golden queries,<br/>continuously evaluated in production"]
         Q2["Index coverage: % of shards<br/>that answered each query"]
         Q3["Index freshness: age distribution<br/>of served documents"]

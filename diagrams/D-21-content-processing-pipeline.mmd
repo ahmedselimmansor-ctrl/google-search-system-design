@@ -13,7 +13,7 @@ flowchart TB
 
     HTML --> DOM["DOM tree"]
     DOM --> JS{"Requires JS<br/>rendering?"}
-    JS -->|"Yes"| REND["Headless render queue<br/>expensive — budgeted"]
+    JS -->|"Yes"| REND["Headless render queue<br/>expensive: budgeted"]
     JS -->|"No"| STRUCT
     REND --> STRUCT["Structural analysis"]
 

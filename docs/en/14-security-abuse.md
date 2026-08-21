@@ -22,8 +22,8 @@ This changes the engineering discipline in a specific way:
 |---|---|---|
 | On-page keywords, meta tags | The page owner, completely | ⚫ Almost none |
 | Outbound links from the page | The page owner | ⚫ Almost none |
-| Inbound links | Third parties — but purchasable | 🔴 Low |
-| Anchor text | Third parties — but purchasable | 🔴 Low |
+| Inbound links | Third parties, but purchasable | 🔴 Low |
+| Anchor text | Third parties, but purchasable | 🔴 Low |
 | Links from *already-trusted* sites | Hard to obtain fraudulently | 🟡 Moderate |
 | Aggregate user behaviour at scale | Requires large-scale fraud to fake | 🟢 High |
 | Human rater judgements | Not externally controllable | 🟢 Very high |
@@ -34,13 +34,13 @@ Notice that the ordering here directly explains the historical arc of search ran
 
 ## 14.2 Spam taxonomy and layered defence
 
-> **Diagram D-68 — Web spam techniques and where each is caught**
+> **Diagram D-68 · Web spam techniques and where each is caught**
 
 ```mermaid
 flowchart TB
     subgraph CONTENT["📄 Content spam"]
         C1["Keyword stuffing"]
-        C2["Hidden text — white on white,<br/>tiny fonts, off-screen CSS"]
+        C2["Hidden text: white on white,<br/>tiny fonts, off-screen CSS"]
         C3["Auto-generated / spun content"]
         C4["Scraped and republished content"]
         C5["Doorway pages"]
@@ -48,35 +48,35 @@ flowchart TB
     end
 
     subgraph LINK["🔗 Link spam"]
-        L1["Link farms — mutual linking networks"]
+        L1["Link farms: mutual linking networks"]
         L2["Paid links"]
         L3["Comment and forum spam"]
         L4["Private blog networks"]
-        L5["Expired-domain hijacking<br/>— buy a domain for its residual trust"]
-        L6["Negative SEO — point toxic links<br/>at a competitor"]
+        L5["Expired-domain hijacking<br/>buy a domain for its residual trust"]
+        L6["Negative SEO: point toxic links<br/>at a competitor"]
     end
 
     subgraph CLOAK["🎭 Deception"]
-        K1["Cloaking — different content<br/>served to crawler vs user"]
-        K2["Sneaky redirects — JS/meta redirect<br/>after the crawler leaves"]
+        K1["Cloaking: different content<br/>served to crawler vs user"]
+        K2["Sneaky redirects: JS/meta redirect<br/>after the crawler leaves"]
         K3["Hacked-site injection"]
         K4["Malware and phishing pages"]
         K5["Bidi/homoglyph tricks in<br/>titles and snippets"]
     end
 
-    CONTENT --> D1["🛡️ Layer 1 — Crawl time<br/>robots and pattern budgets ·<br/>infinite-space detection ·<br/>host and IP-block quotas"]
+    CONTENT --> D1["🛡️ Layer 1: Crawl time<br/>robots and pattern budgets ·<br/>infinite-space detection ·<br/>host and IP-block quotas"]
     LINK --> D1
     CLOAK --> D1
 
-    D1 --> D2["🛡️ Layer 2 — Processing time<br/>content classifiers ·<br/>hidden-text detection ·<br/>duplicate clustering ·<br/>language quality scoring"]
+    D1 --> D2["🛡️ Layer 2: Processing time<br/>content classifiers ·<br/>hidden-text detection ·<br/>duplicate clustering ·<br/>language quality scoring"]
 
-    D2 --> D3["🛡️ Layer 3 — Link graph analysis<br/>TrustRank propagation ·<br/>link-farm topology detection ·<br/>anchor-text diversity requirements ·<br/>discount nofollow/ugc/sponsored"]
+    D2 --> D3["🛡️ Layer 3: Link graph analysis<br/>TrustRank propagation ·<br/>link-farm topology detection ·<br/>anchor-text diversity requirements ·<br/>discount nofollow/ugc/sponsored"]
 
-    D3 --> D4["🛡️ Layer 4 — Index time<br/>demote or exclude ·<br/>tier assignment ·<br/>site-level penalties"]
+    D3 --> D4["🛡️ Layer 4: Index time<br/>demote or exclude ·<br/>tier assignment ·<br/>site-level penalties"]
 
-    D4 --> D5["🛡️ Layer 5 — Serving time<br/>final spam threshold ·<br/>host diversity limits ·<br/>SafeSearch and policy filters"]
+    D4 --> D5["🛡️ Layer 5: Serving time<br/>final spam threshold ·<br/>host diversity limits ·<br/>SafeSearch and policy filters"]
 
-    D5 --> D6["🛡️ Layer 6 — Feedback<br/>user spam reports ·<br/>manual review queues ·<br/>rater feedback into classifiers"]
+    D5 --> D6["🛡️ Layer 6: Feedback<br/>user spam reports ·<br/>manual review queues ·<br/>rater feedback into classifiers"]
 
     D6 -.retrains.-> D2
     D6 -.retunes.-> D3
@@ -87,9 +87,9 @@ flowchart TB
     class D1,D2,D3,D4,D5,D6 def
 ```
 
-**Defence in depth is mandatory here, for an economic reason.** Any single classifier can be reverse-engineered by an adversary with enough attempts — they can observe their own rankings and iterate. Six independent layers mean an attacker must defeat all six simultaneously, and each layer they defeat raises their cost while the defender's cost stays roughly constant. Spam fighting is not about building a perfect filter; it is about making the attack more expensive than the reward.
+**Defence in depth is mandatory here, for an economic reason.** Any single classifier can be reverse-engineered by an adversary with enough attempts: they can observe their own rankings and iterate. Six independent layers mean an attacker must defeat all six simultaneously, and each layer they defeat raises their cost while the defender's cost stays roughly constant. Spam fighting is not about building a perfect filter; it is about making the attack more expensive than the reward.
 
-**Cloaking (K1) deserves specific mention** because it defeats every content-based classifier by construction: the classifier never sees the spam. The only reliable detection is to fetch the page a second time from a residential-looking client, without the crawler's user-agent, and compare the two renders. This is expensive, so it is applied selectively — to pages that rank well but have suspicious behavioural signals.
+**Cloaking (K1) deserves specific mention** because it defeats every content-based classifier by construction: the classifier never sees the spam. The only reliable detection is to fetch the page a second time from a residential-looking client, without the crawler's user-agent, and compare the two renders. This is expensive, so it is applied selectively: to pages that rank well but have suspicious behavioural signals.
 
 ---
 
@@ -97,7 +97,7 @@ flowchart TB
 
 Link spam is the hardest category, because links are simultaneously the most valuable authority signal ([Chapter 08](08-ranking.md)) and the most purchasable one.
 
-> **Diagram D-69 — Link graph anomaly detection**
+> **Diagram D-69 · Link graph anomaly detection**
 
 ```mermaid
 flowchart TB
@@ -114,7 +114,7 @@ flowchart TB
 
     A1 & A2 & A3 & A4 & A5 & A6 --> SCORE["Spam probability per host"]
 
-    subgraph TRUST["TrustRank — propagate trust, not just authority"]
+    subgraph TRUST["TrustRank: propagate trust, not just authority"]
         T1["Seed a small set of hand-vetted,<br/>unambiguously good sites"]
         T2["Propagate trust along links,<br/>attenuating with distance"]
         T3["Pages far from every trusted seed<br/>get low trust regardless of<br/>how much raw PageRank they<br/>accumulated internally"]
@@ -127,7 +127,7 @@ flowchart TB
     SCORE --> ACTION{"Response"}
     ACTION -->|"High confidence"| REMOVE["Remove from index"]
     ACTION -->|"Medium confidence"| DEMOTE["Demote heavily"]
-    ACTION -->|"Suspicious links only"| IGNORE["✅ Ignore the bad links,<br/>keep the page<br/>— PREFERRED response"]
+    ACTION -->|"Suspicious links only"| IGNORE["✅ Ignore the bad links,<br/>keep the page<br/>PREFERRED response"]
     ACTION -->|"Uncertain"| REVIEW["Human review queue"]
 
     IGNORE --> WHY["Why ignoring beats penalising:<br/>if inbound links could HURT a site,<br/>anyone could destroy a competitor<br/>by pointing toxic links at them.<br/><br/>Neutralising bad links is<br/>attack-resistant; penalising for<br/>them creates a new attack."]
@@ -140,9 +140,9 @@ flowchart TB
     class WHY key
 ```
 
-**The `WHY` box captures a design principle that generalises well beyond search.** When defending against manipulation, prefer to *neutralise* the manipulated signal rather than *penalise* the entity it points at — because penalties can be weaponised by third parties. If bad inbound links reduced a site's ranking, "negative SEO" would become a cheap and effective attack on competitors. Discounting the bad links instead makes the attack pointless: the attacker spends money and achieves nothing.
+**The `WHY` box captures a design principle that generalises well beyond search.** When defending against manipulation, prefer to *neutralise* the manipulated signal rather than *penalise* the entity it points at, because penalties can be weaponised by third parties. If bad inbound links reduced a site's ranking, "negative SEO" would become a cheap and effective attack on competitors. Discounting the bad links instead makes the attack pointless: the attacker spends money and achieves nothing.
 
-**TrustRank inverts PageRank's weakness.** PageRank measures how much link authority flows *into* a page, and a link farm can manufacture that internally. TrustRank measures distance from a hand-vetted trusted seed set — and no amount of self-linking moves you closer to a seed you have no genuine connection to. Combining "how much authority" with "how close to known-good" is far more robust than either alone.
+**TrustRank inverts PageRank's weakness.** PageRank measures how much link authority flows *into* a page, and a link farm can manufacture that internally. TrustRank measures distance from a hand-vetted trusted seed set, and no amount of self-linking moves you closer to a seed you have no genuine connection to. Combining "how much authority" with "how close to known-good" is far more robust than either alone.
 
 ---
 
@@ -150,13 +150,13 @@ flowchart TB
 
 Separate from web spam: the system is itself a target.
 
-> **Diagram D-70 — Attack surfaces and controls**
+> **Diagram D-70 · Attack surfaces and controls**
 
 ```mermaid
 flowchart TB
     subgraph SURFACES["Attack surfaces"]
         S1["🌐 Public query endpoint<br/>the only unauthenticated<br/>public entry point"]
-        S2["🕷️ Crawler fetching<br/>hostile content<br/>— we execute attacker input"]
+        S2["🕷️ Crawler fetching<br/>hostile content<br/>we execute attacker input"]
         S3["🖥️ Headless rendering<br/>we run attacker JavaScript"]
         S4["📤 Push/indexing APIs<br/>authenticated but<br/>attacker-operated"]
         S5["🔧 Internal control plane"]
@@ -165,11 +165,11 @@ flowchart TB
 
     S1 --> C1["Rate limiting per IP, subnet, ASN<br/>Bot detection and challenges<br/>Query complexity limits<br/>Strict input validation<br/>DDoS absorption at the edge"]
 
-    S2 --> C2["Parse in a sandbox — assume<br/>every parser has bugs<br/>Size and depth caps<br/>Decompression-bomb limits<br/>Aggressive timeouts<br/>No credentials in the fetcher<br/>Egress restrictions — a crawler<br/>must never reach internal networks"]
+    S2 --> C2["Parse in a sandbox: assume<br/>every parser has bugs<br/>Size and depth caps<br/>Decompression-bomb limits<br/>Aggressive timeouts<br/>No credentials in the fetcher<br/>Egress restrictions: a crawler<br/>must never reach internal networks"]
 
     S3 --> C3["Strong isolation: separate VM/container<br/>per render, destroyed after use<br/>No network access to internal services<br/>Hard CPU/memory/time budgets<br/>Treat as fully compromised by default"]
 
-    S4 --> C4["Verify domain ownership<br/>Per-site quotas<br/>Never trust a submission —<br/>always fetch and verify independently<br/>Full audit log"]
+    S4 --> C4["Verify domain ownership<br/>Per-site quotas<br/>Never trust a submission:<br/>always fetch and verify independently<br/>Full audit log"]
 
     S5 --> C5["Mutual TLS between services<br/>Least-privilege service identity<br/>Two-person review for global changes<br/>Immutable audit trail"]
 
@@ -190,7 +190,7 @@ flowchart TB
     class C1,C2,C3,C4,C5,C6 control
 ```
 
-**The SSRF box is the one most often overlooked in system design discussions.** A crawler fetches URLs supplied by untrusted parties — which is structurally identical to an SSRF vulnerability, except it is the product's core function rather than a bug. If a crawler can be induced to fetch `http://169.254.169.254/` (cloud metadata) or an internal service address, an attacker gains a request primitive inside your network simply by publishing a link.
+**The SSRF box is the one most often overlooked in system design discussions.** A crawler fetches URLs supplied by untrusted parties, which is structurally identical to an SSRF vulnerability, except it is the product's core function rather than a bug. If a crawler can be induced to fetch `http://169.254.169.254/` (cloud metadata) or an internal service address, an attacker gains a request primitive inside your network simply by publishing a link.
 
 Note particularly the **re-validate after DNS resolution** control. Checking that a hostname is not internal *before* resolving it is insufficient: an attacker can serve a public IP on the first DNS lookup and an internal IP on the second (DNS rebinding). The validation must happen on the resolved address actually being connected to.
 
@@ -200,7 +200,7 @@ Note particularly the **re-validate after DNS resolution** control. Checking tha
 
 Search queries are among the most sensitive data any system holds. People search for medical symptoms, legal trouble, and things they would tell no one.
 
-> **Diagram D-71 — Query data lifecycle and privacy controls**
+> **Diagram D-71 · Query data lifecycle and privacy controls**
 
 ```mermaid
 flowchart TB
@@ -211,7 +211,7 @@ flowchart TB
     LOG -->|"Not needed"| DROP["🗑️ Never stored"]
 
     L1 --> P1["① Immediate: strip or truncate<br/>direct identifiers"]
-    P1 --> P2["② Short window: full record for<br/>abuse detection and debugging<br/>— strictly access-controlled"]
+    P1 --> P2["② Short window: full record for<br/>abuse detection and debugging<br/>strictly access-controlled"]
     P2 --> P3["③ Anonymization: IP truncated,<br/>cookies unlinked, session broken"]
     P3 --> P4["④ Aggregation: only counts and<br/>distributions retained"]
     P4 --> P5["⑤ Deletion of raw records<br/>on a fixed schedule"]
@@ -224,14 +224,14 @@ flowchart TB
 
     subgraph CONTROLS["User-facing controls that must actually work"]
         UC1["View and delete history"]
-        UC2["Turn off personalization<br/>— and have it genuinely off"]
-        UC3["Private / incognito mode<br/>— no logging tied to identity"]
+        UC2["Turn off personalization<br/>and have it genuinely off"]
+        UC3["Private / incognito mode<br/>no logging tied to identity"]
         UC4["Data export"]
         UC5["Auto-delete after N months"]
     end
 
     subgraph RISKS["Privacy risks specific to search"]
-        R1["⚠️ Rare queries are identifying<br/>even without a user id —<br/>a unique query IS a fingerprint"]
+        R1["⚠️ Rare queries are identifying<br/>even without a user id:<br/>a unique query IS a fingerprint"]
         R2["⚠️ Autocomplete can leak<br/>another user's private query<br/>if popularity thresholds are too low"]
         R3["⚠️ Aggregate statistics can be<br/>de-anonymized by intersection<br/>→ apply k-anonymity thresholds<br/>and differential privacy noise"]
         R4["⚠️ Logs are a subpoena target;<br/>data you never stored cannot<br/>be compelled or breached"]
@@ -245,7 +245,7 @@ flowchart TB
     class R1,R2,R3,R4 risk
 ```
 
-**R1 is the risk that surprises engineers most.** "We removed the user id, so it is anonymous" is false for search logs. A query like *"lawyer specialising in [rare condition] in [small town]"* identifies a person as effectively as a name. Genuine anonymisation of query logs requires k-anonymity thresholds — suppressing queries that too few distinct users issued — not merely stripping identifiers.
+**R1 is the risk that surprises engineers most.** "We removed the user id, so it is anonymous" is false for search logs. A query like *"lawyer specialising in [rare condition] in [small town]"* identifies a person as effectively as a name. Genuine anonymisation of query logs requires k-anonymity thresholds (suppressing queries that too few distinct users issued) not merely stripping identifiers.
 
 **R4 is the strongest privacy control available and the easiest to skip.** Data that was never collected cannot be leaked, subpoenaed, misused by an insider, or exposed by a future bug. Every retention decision should start from "what is the minimum we need, for the shortest time?" rather than "what might be useful someday?"
 
@@ -257,12 +257,12 @@ flowchart TB
 |---|---|
 | Adversaries adapt within days | Static rules decay; classifiers must be retrained continuously |
 | Detection reveals detection | Publishing exactly what you detect teaches evasion |
-| False positives destroy livelihoods | A wrongly-demoted legitimate business is real harm — appeals and human review are required, not optional |
+| False positives destroy livelihoods | A wrongly-demoted legitimate business is real harm, appeals and human review are required, not optional |
 | Attackers probe with real traffic | Their experiments look like normal usage; detection must work on aggregates |
 | Defence must scale to 10¹¹ pages | Manual review handles only the highest-impact cases |
 | Some categories need extra care | Health, finance, safety and civic information warrant stricter authority requirements |
 
-**The false-positive point is an ethical constraint, not just an engineering one.** At this scale, a classifier with 99.9 % precision still mislabels 10⁸ pages. Behind some of those pages are small businesses whose income depends on being findable. That is why a mature system pairs automated enforcement with a genuine appeals path and human review for consequential decisions — and why "the model said so" is never an adequate justification for a penalty that affects someone's livelihood.
+**The false-positive point is an ethical constraint, not just an engineering one.** At this scale, a classifier with 99.9 % precision still mislabels 10⁸ pages. Behind some of those pages are small businesses whose income depends on being findable. That is why a mature system pairs automated enforcement with a genuine appeals path and human review for consequential decisions, and why "the model said so" is never an adequate justification for a penalty that affects someone's livelihood.
 
 ---
 

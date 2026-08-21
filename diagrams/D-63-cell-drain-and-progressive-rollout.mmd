@@ -13,7 +13,7 @@ sequenceDiagram
     TM->>C2: increase weight
     C1->>C1: finish in-flight requests
     C1-->>TM: zero active traffic
-    TM-->>OP: A1 drained — safe to operate on
+    TM-->>OP: A1 drained · safe to operate on
 
     Note over OP,MON: === PROGRESSIVE ROLLOUT ===
     OP->>C1: deploy new binary / index / model
@@ -26,7 +26,7 @@ sequenceDiagram
     alt Metrics healthy
         MON-->>TM: green
         TM->>TM: 1% → 5% → 25% → 50% → 100%
-        Note over TM,MON: Bake time at each step —<br/>long enough to observe the<br/>slowest-moving metric
+        Note over TM,MON: Bake time at each step:<br/>long enough to observe the<br/>slowest-moving metric
         OP->>C2: proceed to next cell
     else Metrics regressed
         MON-->>TM: 🚨 automatic rollback
@@ -40,4 +40,4 @@ sequenceDiagram
     TM->>TM: withdraw BGP announcements for EMEA sites
     Note over TM,C2: Anycast reroutes EMEA users<br/>to the next nearest region.<br/>Latency +80–150 ms, service intact.
     TM->>C2: scale up remaining regions
-    Note over C2: This only works if regions run<br/>with headroom — capacity planning<br/>must assume N-1 regions.
+    Note over C2: This only works if regions run<br/>with headroom · capacity planning<br/>must assume N-1 regions.

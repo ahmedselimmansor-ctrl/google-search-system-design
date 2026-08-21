@@ -10,11 +10,11 @@ flowchart LR
 
     FRESH --> FILT["Final filters"]
     FILT --> F1["SafeSearch"]
-    FILT --> F2["Legal removals — region scoped"]
+    FILT --> F2["Legal removals: region scoped"]
     FILT --> F3["Spam threshold"]
     FILT --> F4["Broken-link / soft-404 suppression"]
 
-    F1 & F2 & F3 & F4 --> WHY["Explainability annotations<br/>why this result ranks here<br/>— for debugging and raters"]
+    F1 & F2 & F3 & F4 --> WHY["Explainability annotations<br/>why this result ranks here<br/>for debugging and raters"]
 
     WHY --> OUT(("Final 10"))
 

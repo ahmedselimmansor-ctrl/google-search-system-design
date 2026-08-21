@@ -1,7 +1,7 @@
 flowchart TB
     Q["Incoming query"] --> T0
 
-    subgraph T0["🔥 Tier 0 — hot"]
+    subgraph T0["🔥 Tier 0: hot"]
         T0D["10⁹ docs · 1% of corpus<br/>~6 TB · RAM-resident<br/>600 replicas<br/>full positions, all signals"]
     end
 
@@ -9,7 +9,7 @@ flowchart TB
     C0 -->|"Yes ~85%"| DONE0["✅ Serve from Tier 0<br/>latency ~40 ms"]
     C0 -->|"No"| T1
 
-    subgraph T1["⚡ Tier 1 — warm"]
+    subgraph T1["⚡ Tier 1: warm"]
         T1D["10¹⁰ docs · 10% of corpus<br/>~60 TB · RAM + NVMe<br/>90 replicas<br/>full positions"]
     end
 
@@ -17,14 +17,14 @@ flowchart TB
     C1 -->|"Yes ~12%"| DONE1["✅ Serve from T0 + T1<br/>latency ~80 ms"]
     C1 -->|"No"| T2
 
-    subgraph T2["🧊 Tier 2 — cold"]
+    subgraph T2["🧊 Tier 2: cold"]
         T2D["8.9 × 10¹⁰ docs · 89%<br/>~534 TB · NVMe<br/>36 replicas<br/>positions pruned to save space"]
     end
 
     T2 --> DONE2["✅ Serve from all tiers<br/>latency ~200 ms<br/>rare, long-tail queries"]
 
     subgraph ASSIGN["What decides a document's tier"]
-        A1["Query coverage — does it ever get retrieved?"]
+        A1["Query coverage: does it ever get retrieved?"]
         A2["PageRank / authority"]
         A3["Click-through history"]
         A4["Freshness and change rate"]

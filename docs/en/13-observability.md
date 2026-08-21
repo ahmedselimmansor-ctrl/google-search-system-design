@@ -12,9 +12,9 @@
 
 ## 13.1 You cannot debug what you cannot see
 
-A query touches thousands of machines across a dozen services. When it is slow, "which one was it?" is not answerable by logging into a box. Observability is not an operational afterthought here — it is a functional requirement of the architecture, because the architecture made single-machine debugging impossible.
+A query touches thousands of machines across a dozen services. When it is slow, "which one was it?" is not answerable by logging into a box. Observability is not an operational afterthought here: it is a functional requirement of the architecture, because the architecture made single-machine debugging impossible.
 
-> **Diagram D-64 — The observability stack**
+> **Diagram D-64 · The observability stack**
 
 ```mermaid
 flowchart TB
@@ -42,7 +42,7 @@ flowchart TB
     TR --> D5["Latency attribution"]
     TR --> D6["Dependency mapping"]
 
-    subgraph QUALITY["Search-specific signals — the ones generic APM misses"]
+    subgraph QUALITY["Search-specific signals: the ones generic APM misses"]
         Q1["Result quality: NDCG on golden queries,<br/>continuously evaluated in production"]
         Q2["Index coverage: % of shards<br/>that answered each query"]
         Q3["Index freshness: age distribution<br/>of served documents"]
@@ -64,13 +64,13 @@ flowchart TB
     class Q1,Q2,Q3,Q4,Q5,Q6 qual
 ```
 
-**The QUALITY box is what distinguishes search observability from generic monitoring.** A search engine can be perfectly healthy by every infrastructure metric — 100 % availability, p99 within SLO, zero errors — while returning terrible results. Latency and error rate cannot detect a bad ranking model or a corrupted index. Continuous quality evaluation against a fixed golden-query set is the only monitor that catches that class of failure, and it deserves the same alerting severity as an availability breach.
+**The QUALITY box is what distinguishes search observability from generic monitoring.** A search engine can be perfectly healthy by every infrastructure metric (100 % availability, p99 within SLO, zero errors) while returning terrible results. Latency and error rate cannot detect a bad ranking model or a corrupted index. Continuous quality evaluation against a fixed golden-query set is the only monitor that catches that class of failure, and it deserves the same alerting severity as an availability breach.
 
 ---
 
 ## 13.2 Distributed tracing
 
-> **Diagram D-65 — A single query's trace**
+> **Diagram D-65 · A single query's trace**
 
 ```mermaid
 gantt
@@ -110,7 +110,7 @@ gantt
 
 Reading this trace, the diagnosis is immediate and unambiguous: **`leaf-0714` took 150 ms instead of ~55 ms**, and because the root must wait for all shards, that single leaf set the latency of the entire query. The hedged request fired at ~130 ms but its replica did not return early enough to help much.
 
-Without tracing, this appears in metrics only as "p99 latency is up" — with a thousand candidate leaves and no way to attribute it. This is exactly the problem Dapper (2010) was built to solve, and its three design decisions are worth stating because they are what make tracing affordable at this scale:
+Without tracing, this appears in metrics only as "p99 latency is up", with a thousand candidate leaves and no way to attribute it. This is exactly the problem Dapper (2010) was built to solve, and its three design decisions are worth stating because they are what make tracing affordable at this scale:
 
 | Decision | Why |
 |---|---|
@@ -124,29 +124,29 @@ Without tracing, this appears in metrics only as "p99 latency is up" — with a 
 
 ## 13.3 Experimentation
 
-Every ranking change, UI change and infrastructure change is validated by controlled experiment. At any moment a large search engine is running *hundreds* of concurrent experiments — which creates a problem: there is not enough traffic to give each one an exclusive slice.
+Every ranking change, UI change and infrastructure change is validated by controlled experiment. At any moment a large search engine is running *hundreds* of concurrent experiments, which creates a problem: there is not enough traffic to give each one an exclusive slice.
 
-> **Diagram D-66 — Overlapping layered experiments**
+> **Diagram D-66 · Overlapping layered experiments**
 
 ```mermaid
 flowchart TB
-    REQ["Incoming request"] --> ID["Compute a stable diversion id<br/>hash(cookie or session)<br/>— MUST be stable so a user<br/>sees a consistent experience"]
+    REQ["Incoming request"] --> ID["Compute a stable diversion id<br/>hash(cookie or session)<br/>MUST be stable so a user<br/>sees a consistent experience"]
 
     ID --> LAYERS["Assign independently in each layer"]
 
-    subgraph L1["Layer 1 — Retrieval"]
+    subgraph L1["Layer 1: Retrieval"]
         A1["Control: current retrieval"]
         A2["Exp 1a: wider candidate set"]
         A3["Exp 1b: hybrid dense weight +10%"]
     end
 
-    subgraph L2["Layer 2 — Ranking"]
+    subgraph L2["Layer 2: Ranking"]
         B1["Control: current L3 model"]
         B2["Exp 2a: new cross-encoder"]
         B3["Exp 2b: freshness prior tweak"]
     end
 
-    subgraph L3["Layer 3 — Presentation"]
+    subgraph L3["Layer 3: Presentation"]
         C1["Control: current SERP"]
         C2["Exp 3a: longer snippets"]
         C3["Exp 3b: new vertical layout"]
@@ -167,13 +167,13 @@ flowchart TB
 
     ME1 & ME2 & ME3 & ME4 --> STAT["Statistical analysis"]
     STAT --> ST1["Sufficient power before reading results"]
-    STAT --> ST2["Multiple-comparison correction<br/>— with 100s of experiments,<br/>5% of them show p<0.05 by chance"]
+    STAT --> ST2["Multiple-comparison correction<br/>with 100s of experiments,<br/>5% of them show p<0.05 by chance"]
     STAT --> ST3["Guardrail metrics must not regress,<br/>even if the primary metric improves"]
     STAT --> ST4["Novelty effects: re-measure after<br/>the initial curiosity decays"]
 
     ST1 & ST2 & ST3 & ST4 --> DECIDE{"Ship?"}
-    DECIDE -->|"Yes"| RAMP["Progressive ramp — Chapter 12"]
-    DECIDE -->|"No"| LEARN["Record the negative result<br/>— it has real value"]
+    DECIDE -->|"Yes"| RAMP["Progressive ramp: Chapter 12"]
+    DECIDE -->|"No"| LEARN["Record the negative result<br/>it has real value"]
 
     classDef exp fill:#bfdbfe,stroke:#1d4ed8,color:#1c1917
     classDef stat fill:#fde68a,stroke:#b45309,color:#1c1917
@@ -187,26 +187,26 @@ flowchart TB
 
 **Multiple comparisons.** Running 400 experiments at p < 0.05 means ~20 will appear significant purely by chance. Without correction (Benjamini–Hochberg or similar), an organisation systematically ships noise and slowly degrades its own product while every individual decision looked justified. This is not a theoretical concern; it is the default outcome of running many experiments without correction.
 
-**Guardrail metrics.** A change that improves CTR by 2 % while increasing latency by 30 ms and reducing long-click rate is a *loss*, not a win. Every experiment must declare guardrails in advance — latency, error rate, human-rated quality, revenue-neutral checks — and a guardrail regression blocks the launch regardless of how good the primary metric looks. Declaring them *in advance* is the part that matters: post-hoc guardrails are indistinguishable from rationalisation.
+**Guardrail metrics.** A change that improves CTR by 2 % while increasing latency by 30 ms and reducing long-click rate is a *loss*, not a win. Every experiment must declare guardrails in advance (latency, error rate, human-rated quality, revenue-neutral checks), and a guardrail regression blocks the launch regardless of how good the primary metric looks. Declaring them *in advance* is the part that matters: post-hoc guardrails are indistinguishable from rationalisation.
 
 ---
 
 ## 13.4 Alerting on symptoms, not causes
 
-> **Diagram D-67 — SLO-based alerting**
+> **Diagram D-67 · SLO-based alerting**
 
 ```mermaid
 flowchart TB
-    subgraph GOOD["✅ Alert on these — user-visible symptoms"]
+    subgraph GOOD["✅ Alert on these: user-visible symptoms"]
         A1["SLO burn rate<br/>'error budget will exhaust in 4 h'"]
         A2["p99 latency above SLO<br/>sustained over a window"]
         A3["Result-quality score drop<br/>on golden queries"]
         A4["Index coverage below threshold"]
-        A5["Index freshness stalled<br/>— age distribution shifting"]
-        A6["🚨 Politeness violations > 0<br/>— a trust breach, page immediately"]
+        A5["Index freshness stalled<br/>age distribution shifting"]
+        A6["🚨 Politeness violations > 0<br/>a trust breach, page immediately"]
     end
 
-    subgraph BAD["⚠️ Do NOT page on these — causes, not symptoms"]
+    subgraph BAD["⚠️ Do NOT page on these: causes, not symptoms"]
         B1["Single machine down<br/>→ expected, handled automatically"]
         B2["CPU above 80%<br/>→ that is called utilization"]
         B3["A cache miss occurred"]
@@ -242,7 +242,7 @@ flowchart TB
     class A6,DELETE crit
 ```
 
-**"CPU above 80 %" is the canonical bad alert.** In a system designed for graceful degradation, high utilisation is *the goal* — idle capacity is wasted money. Users do not experience CPU; they experience latency and result quality. Alert on what users experience, and let the system handle causes automatically.
+**"CPU above 80 %" is the canonical bad alert.** In a system designed for graceful degradation, high utilisation is *the goal*: idle capacity is wasted money. Users do not experience CPU; they experience latency and result quality. Alert on what users experience, and let the system handle causes automatically.
 
 **The `DELETE` node is the most under-used tool in operations.** Every alert that fires without a clear action trains the on-call engineer to ignore alerts. Alert fatigue is not a personal failing; it is a predictable consequence of unactionable alerts, and the fix is deletion, not discipline.
 

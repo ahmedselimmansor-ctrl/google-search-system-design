@@ -35,7 +35,7 @@ sequenceDiagram
         alt 304 Not Modified
             H-->>W: 304
             W->>ST: bump last-verified timestamp only
-            Note over W,ST: Cheapest possible outcome —<br/>no body transferred, no reparse
+            Note over W,ST: Cheapest possible outcome:<br/>no body transferred, no reparse
         else 200 OK
             H-->>W: body (capped at N MB)
             W->>W: content-type check, charset detect

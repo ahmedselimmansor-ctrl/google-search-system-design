@@ -12,11 +12,11 @@
 
 ## 8.1 Ranking is the product
 
-Everything in Chapters 04–07 exists to deliver a few hundred plausible candidates to this chapter. Retrieval is an engineering problem with correct answers. **Ranking is a judgement problem with no ground truth** — which documents are "best" for `jaguar` depends on who is asking, when, and why.
+Everything in Chapters 04–07 exists to deliver a few hundred plausible candidates to this chapter. Retrieval is an engineering problem with correct answers. **Ranking is a judgement problem with no ground truth**, which documents are "best" for `jaguar` depends on who is asking, when, and why.
 
 The architectural consequence is the **cascade**: apply cheap scoring to many documents and expensive scoring to few, so that total cost stays inside the latency budget while the final ordering gets the benefit of the most powerful model you can afford.
 
-> **Diagram D-39 — The retrieval and ranking funnel**
+> **Diagram D-39 · The retrieval and ranking funnel**
 
 ```mermaid
 flowchart TB
@@ -34,7 +34,7 @@ flowchart TB
 
     C5 -->|"diversity · freshness ·<br/>host dedup · policy filters"| C6["✅ Final SERP<br/>10 results"]
 
-    subgraph BUDGET["Cost discipline — the whole point of the cascade"]
+    subgraph BUDGET["Cost discipline: the whole point of the cascade"]
         B1["L1: 10⁵ docs × 10 ns  =   1 ms"]
         B2["L2: 10³ docs × 10 µs  =  10 ms"]
         B3["L3: 10² docs × 1 ms   = 100 ms"]
@@ -51,15 +51,15 @@ flowchart TB
     class C6 final
 ```
 
-**Read the budget box carefully — it is the core insight.** L3 is 100,000× more expensive per document than L1. Running L3 on 10⁵ documents would take 100 seconds. The funnel is not an optimisation layered on top of ranking; the funnel *is* how expensive ranking becomes possible at all.
+**Read the budget box carefully: it is the core insight.** L3 is 100,000× more expensive per document than L1. Running L3 on 10⁵ documents would take 100 seconds. The funnel is not an optimisation layered on top of ranking; the funnel *is* how expensive ranking becomes possible at all.
 
-The corresponding risk: **a document wrongly dropped at L1 can never be recovered by L3.** Recall errors early in the cascade are permanent. This is why L1 is deliberately generous — it optimises recall, not precision, and leaves precision to the stages that can afford it.
+The corresponding risk: **a document wrongly dropped at L1 can never be recovered by L3.** Recall errors early in the cascade are permanent. This is why L1 is deliberately generous: it optimises recall, not precision, and leaves precision to the stages that can afford it.
 
 ---
 
 ## 8.2 The signal taxonomy
 
-> **Diagram D-40 — Where ranking signals come from**
+> **Diagram D-40 · Where ranking signals come from**
 
 ```mermaid
 mindmap
@@ -125,15 +125,15 @@ The split matters operationally:
 
 | Class | Computed | Storage cost | Latency cost |
 |---|---|---|---|
-| Query-independent | Offline, at index time | High — stored per document | ~0 at query time |
+| Query-independent | Offline, at index time | High: stored per document | ~0 at query time |
 | Query-dependent | At query time, in the leaf | ~0 | The dominant serving cost |
 | Context-dependent | At query time, from request | ~0 | Low, but multiplies cache keys |
 
-**Push everything you can into the query-independent column.** That is the recurring principle from [Chapter 01](01-overview.md) — do the expensive work offline. The query path should *combine* precomputed numbers, not compute them.
+**Push everything you can into the query-independent column.** That is the recurring principle from [Chapter 01](01-overview.md): do the expensive work offline. The query path should *combine* precomputed numbers, not compute them.
 
 ---
 
-## 8.3 PageRank — the query-independent authority signal
+## 8.3 PageRank: the query-independent authority signal
 
 PageRank models a random surfer who follows links at random and occasionally jumps to a random page. The stationary probability of being at page *p* is its PageRank.
 
@@ -141,7 +141,7 @@ $$PR(p) = \frac{1-d}{N} + d \sum_{q \in In(p)} \frac{PR(q)}{L(q)}$$
 
 where *d* ≈ 0.85 is the damping factor, *N* is the number of pages, *In(p)* is the set of pages linking to *p*, and *L(q)* is the outdegree of *q*.
 
-> **Diagram D-41 — PageRank computation at scale**
+> **Diagram D-41 · PageRank computation at scale**
 
 ```mermaid
 flowchart TB
@@ -165,7 +165,7 @@ flowchart TB
     CONV -->|"Yes"| POST["Post-processing"]
 
     POST --> P1["Handle dangling nodes<br/>pages with no outlinks<br/>redistribute their mass uniformly"]
-    POST --> P2["Log-scale and bucket<br/>into a small integer<br/>— only relative order matters"]
+    POST --> P2["Log-scale and bucket<br/>into a small integer<br/>only relative order matters"]
     POST --> P3["Compute host-level<br/>and domain-level aggregates"]
 
     P1 & P2 & P3 --> OUT[("Per-document authority score<br/>→ stored in doc attachments<br/>→ shipped with the index")]
@@ -196,7 +196,7 @@ Second, **dangling nodes are not a footnote.** A large fraction of the web has n
 
 Hand-tuning hundreds of feature weights is impossible. Ranking is learned from labelled data.
 
-> **Diagram D-42 — Learning-to-rank training and deployment loop**
+> **Diagram D-42 · Learning-to-rank training and deployment loop**
 
 ```mermaid
 flowchart TB
@@ -216,8 +216,8 @@ flowchart TB
     subgraph TRAIN["③ Model training"]
         OBJ{"Objective formulation"}
         OBJ -->|"Pointwise"| PW["Predict relevance per doc<br/>simple, ignores ranking structure"]
-        OBJ -->|"Pairwise"| PR2["Predict which of two docs<br/>ranks higher — RankNet"]
-        OBJ -->|"Listwise"| LW["Optimize the whole list<br/>directly against NDCG —<br/>LambdaMART, LambdaRank"]
+        OBJ -->|"Pairwise"| PR2["Predict which of two docs<br/>ranks higher: RankNet"]
+        OBJ -->|"Listwise"| LW["Optimize the whole list<br/>directly against NDCG:<br/>LambdaMART, LambdaRank"]
         LW --> MODEL["Trained model<br/>GBDT for L2 · transformer for L3"]
         PW --> MODEL
         PR2 --> MODEL
@@ -234,7 +234,7 @@ flowchart TB
     MODEL --> E1 & E2 & E3
 
     E1 & E2 & E3 --> GATE{"Beats production<br/>on every slice?"}
-    GATE -->|"No"| BACK["Iterate — investigate<br/>the regressed slice"]
+    GATE -->|"No"| BACK["Iterate: investigate<br/>the regressed slice"]
     BACK --> OBJ
 
     GATE -->|"Yes"| AB["⑤ Online A/B test<br/>small traffic slice<br/>see Chapter 13"]
@@ -262,25 +262,25 @@ flowchart TB
 
 ### Why listwise objectives win
 
-Ranking quality is measured by NDCG, which is a property of the *whole list*, not of individual documents. A pointwise model that predicts each document's relevance perfectly in isolation can still produce a poor list, because it has no notion that swapping positions 1 and 2 matters far more than swapping positions 9 and 10. LambdaMART works by directly weighting each training pair by *how much NDCG would change* if those two documents swapped — which aligns the gradient with the metric you actually care about.
+Ranking quality is measured by NDCG, which is a property of the *whole list*, not of individual documents. A pointwise model that predicts each document's relevance perfectly in isolation can still produce a poor list, because it has no notion that swapping positions 1 and 2 matters far more than swapping positions 9 and 10. LambdaMART works by directly weighting each training pair by *how much NDCG would change* if those two documents swapped, which aligns the gradient with the metric you actually care about.
 
 ### The two failure modes that actually bite
 
-**Position bias.** Users click result #1 far more than result #5, regardless of relevance. A model trained naïvely on clicks learns "documents that were ranked first are good", which is circular: it entrenches the current ranking and can never discover that #7 was better. The fixes — inverse propensity weighting, and deliberately randomising results for a small traffic slice to collect unbiased data — are mandatory, not optional refinements.
+**Position bias.** Users click result #1 far more than result #5, regardless of relevance. A model trained naïvely on clicks learns "documents that were ranked first are good", which is circular: it entrenches the current ranking and can never discover that #7 was better. The fixes: inverse propensity weighting, and deliberately randomising results for a small traffic slice to collect unbiased data: are mandatory, not optional refinements.
 
 **Training/serving skew.** If a feature is computed one way in the training pipeline and slightly differently in the serving binary, the model receives inputs it was never trained on. This produces no error and no alert; quality simply degrades. The only reliable defence is to **log features from production serving and train on exactly those logged vectors**, never recomputing them in the training pipeline.
 
 ---
 
-## 8.5 Neural retrieval — beyond term matching
+## 8.5 Neural retrieval: beyond term matching
 
 Lexical retrieval fails on the **vocabulary mismatch problem**: a document about "automobile maintenance" does not match a query for "car repair" even though it is exactly what the user wants. Dense retrieval solves this by mapping both queries and documents into a shared semantic vector space.
 
-> **Diagram D-43 — Dense retrieval and hybrid fusion**
+> **Diagram D-43 · Dense retrieval and hybrid fusion**
 
 ```mermaid
 flowchart TB
-    subgraph OFFLINE["Offline — at index time"]
+    subgraph OFFLINE["Offline: at index time"]
         D["Document text"] --> DE["Document encoder<br/>transformer bi-encoder"]
         DE --> DV["Dense vector<br/>768-dim, quantized to int8"]
         DV --> ANN["ANN index construction"]
@@ -288,7 +288,7 @@ flowchart TB
         ANN --> A2["IVF-PQ: coarse cluster +<br/>product quantization<br/>lower RAM, tunable recall"]
     end
 
-    subgraph ONLINE["Online — at query time"]
+    subgraph ONLINE["Online: at query time"]
         Q["Query text"] --> QE["Query encoder<br/>same embedding space"]
         QE --> QV["Query vector"]
     end
@@ -296,7 +296,7 @@ flowchart TB
     QV --> SEARCH["ANN search<br/>approximate nearest neighbours<br/>~1–5 ms for top-1000"]
     A1 & A2 --> SEARCH
 
-    subgraph HYBRID["Hybrid retrieval — both paths run"]
+    subgraph HYBRID["Hybrid retrieval: both paths run"]
         LEX["🔤 Lexical candidates<br/>BM25 / inverted index<br/>✅ exact terms, names, numbers, codes<br/>✅ interpretable, cheap<br/>❌ vocabulary mismatch"]
         SEM["🧠 Semantic candidates<br/>dense vector search<br/>✅ synonyms, paraphrase, cross-lingual<br/>❌ weak on rare exact strings<br/>❌ opaque, expensive to update"]
     end
@@ -320,7 +320,7 @@ flowchart TB
     class FUSE,F1,F2,CAND fuse
 ```
 
-### Bi-encoder vs cross-encoder — why both exist
+### Bi-encoder vs cross-encoder: why both exist
 
 | | **Bi-encoder** (retrieval) | **Cross-encoder** (re-ranking) |
 |---|---|---|
@@ -330,24 +330,24 @@ flowchart TB
 | Accuracy | Good | Substantially better |
 | Feasible over | 10¹¹ documents | ~10² documents |
 
-This is exactly why the cascade exists. The bi-encoder can pre-compute document vectors because it never looks at the query while encoding — so retrieval over billions is possible. The cross-encoder is more accurate precisely *because* it reads both together, which is also why it can never be precomputed. Cheap-and-parallel retrieves; expensive-and-accurate re-ranks.
+This is exactly why the cascade exists. The bi-encoder can pre-compute document vectors because it never looks at the query while encoding, so retrieval over billions is possible. The cross-encoder is more accurate precisely *because* it reads both together, which is also why it can never be precomputed. Cheap-and-parallel retrieves; expensive-and-accurate re-ranks.
 
 ### When lexical retrieval still wins
 
 Dense retrieval is not a replacement. It reliably loses on:
 
-- **Exact identifiers** — part numbers, error codes, `NullPointerException`, phone numbers
+- **Exact identifiers**: part numbers, error codes, `NullPointerException`, phone numbers
 - **Rare proper nouns** absent or under-represented in training data
-- **Negation and precise logic** — embeddings notoriously blur "X" and "not X"
-- **Freshness** — a brand-new entity is not in the embedding model's learned vocabulary until it is retrained; the inverted index has it the moment it is crawled
+- **Negation and precise logic**: embeddings notoriously blur "X" and "not X"
+- **Freshness**: a brand-new entity is not in the embedding model's learned vocabulary until it is retrained; the inverted index has it the moment it is crawled
 
-That last point is architecturally important: **the lexical index updates in minutes; the embedding model updates in weeks.** Hybrid retrieval is not hedging — it is combining two systems with genuinely complementary failure modes.
+That last point is architecturally important: **the lexical index updates in minutes; the embedding model updates in weeks.** Hybrid retrieval is not hedging; it is combining two systems with genuinely complementary failure modes.
 
 ---
 
 ## 8.6 Personalisation and context
 
-> **Diagram D-44 — Context application in ranking**
+> **Diagram D-44 · Context application in ranking**
 
 ```mermaid
 flowchart TB
@@ -376,12 +376,12 @@ flowchart TB
 
     CTX --> HIST["👤 Consented history"]
     HIST --> H1["Session context:<br/>previous query disambiguates<br/>'jaguar' after 'zoo tickets'"]
-    HIST --> H2["Long-term interests<br/>— small weight, opt-out honoured"]
+    HIST --> H2["Long-term interests<br/>small weight, opt-out honoured"]
 
     L1 & L2 & L3 & LG1 & LG2 & LG3 & T1 & T2 & T3 & D1 & D2 & H1 & H2 --> ADJ["Adjusted ranking"]
 
     ADJ --> GUARD["Guardrails"]
-    GUARD --> G1["Cap personalization influence<br/>— it is a tiebreaker, not a re-ranker"]
+    GUARD --> G1["Cap personalization influence<br/>it is a tiebreaker, not a re-ranker"]
     GUARD --> G2["Preserve diversity<br/>avoid filter bubbles"]
     GUARD --> G3["Never personalize away<br/>authoritative results on<br/>health, safety, civic topics"]
     GUARD --> G4["Full opt-out must be honoured<br/>and must actually work"]
@@ -394,7 +394,7 @@ flowchart TB
     class GUARD,G1,G2,G3,G4 guard
 ```
 
-**Personalisation is architecturally expensive in a way that is easy to miss.** Every context dimension you add multiplies the result-cache key space. A cache keyed on `(query, country, language)` might hit 40 % of the time; a cache keyed on `(query, country, language, city, device, user_id)` will essentially never hit. Since [Chapter 03](03-capacity-estimation.md) showed the cache removes ~40 % of all serving cost, aggressive personalisation can *double the cost of the entire serving fleet*. This — far more than any privacy argument — is why production personalisation is applied as a light post-ranking adjustment rather than as a per-user retrieval.
+**Personalisation is architecturally expensive in a way that is easy to miss.** Every context dimension you add multiplies the result-cache key space. A cache keyed on `(query, country, language)` might hit 40 % of the time; a cache keyed on `(query, country, language, city, device, user_id)` will essentially never hit. Since [Chapter 03](03-capacity-estimation.md) showed the cache removes ~40 % of all serving cost, aggressive personalisation can *double the cost of the entire serving fleet*. This (far more than any privacy argument) is why production personalisation is applied as a light post-ranking adjustment rather than as a per-user retrieval.
 
 ---
 
@@ -402,7 +402,7 @@ flowchart TB
 
 The top-10 by score is often a bad SERP. Ten near-identical pages from one site technically maximise relevance while serving the user poorly.
 
-> **Diagram D-45 — Post-ranking result-set optimisation**
+> **Diagram D-45 · Post-ranking result-set optimisation**
 
 ```mermaid
 flowchart LR
@@ -417,11 +417,11 @@ flowchart LR
 
     FRESH --> FILT["Final filters"]
     FILT --> F1["SafeSearch"]
-    FILT --> F2["Legal removals — region scoped"]
+    FILT --> F2["Legal removals: region scoped"]
     FILT --> F3["Spam threshold"]
     FILT --> F4["Broken-link / soft-404 suppression"]
 
-    F1 & F2 & F3 & F4 --> WHY["Explainability annotations<br/>why this result ranks here<br/>— for debugging and raters"]
+    F1 & F2 & F3 & F4 --> WHY["Explainability annotations<br/>why this result ranks here<br/>for debugging and raters"]
 
     WHY --> OUT(("Final 10"))
 
@@ -431,11 +431,11 @@ flowchart LR
     class F1,F2,F3,F4 filt
 ```
 
-**Diversification is an explicit trade of measured relevance for actual usefulness.** Every diversity constraint *lowers* the NDCG of the list as computed against per-document relevance labels, because you are deliberately not showing the highest-scoring document in some slot. It is justified only by user-level metrics — task success, reformulation rate, long clicks — which is a good illustration of why [Chapter 02](02-requirements.md) insists on multiple, disagreeing quality metrics rather than one optimisation target.
+**Diversification is an explicit trade of measured relevance for actual usefulness.** Every diversity constraint *lowers* the NDCG of the list as computed against per-document relevance labels, because you are deliberately not showing the highest-scoring document in some slot. It is justified only by user-level metrics (task success, reformulation rate, long clicks), which is a good illustration of why [Chapter 02](02-requirements.md) insists on multiple, disagreeing quality metrics rather than one optimisation target.
 
 ---
 
-## 8.8 Summary — the ranking stack
+## 8.8 Summary: the ranking stack
 
 | Stage | Runs on | Docs in → out | Model | Latency |
 |---|---|---:|---|---:|

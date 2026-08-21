@@ -5,7 +5,7 @@ flowchart TB
     SAN --> LANGD["Language & script detection<br/>+ user locale signals"]
     LANGD --> NORMZ["Language-specific normalization<br/>see Chapter 05"]
 
-    NORMZ --> TOKQ["Tokenize<br/>same analyzer as index — critical!"]
+    NORMZ --> TOKQ["Tokenize<br/>same analyzer as index: critical!"]
 
     TOKQ --> PARSE["Operator parsing<br/>quotes · site: · filetype: · -term · OR"]
 

@@ -12,7 +12,7 @@ flowchart TB
 
     A1 & A2 & A3 & A4 & A5 & A6 --> SCORE["Spam probability per host"]
 
-    subgraph TRUST["TrustRank — propagate trust, not just authority"]
+    subgraph TRUST["TrustRank: propagate trust, not just authority"]
         T1["Seed a small set of hand-vetted,<br/>unambiguously good sites"]
         T2["Propagate trust along links,<br/>attenuating with distance"]
         T3["Pages far from every trusted seed<br/>get low trust regardless of<br/>how much raw PageRank they<br/>accumulated internally"]
@@ -25,7 +25,7 @@ flowchart TB
     SCORE --> ACTION{"Response"}
     ACTION -->|"High confidence"| REMOVE["Remove from index"]
     ACTION -->|"Medium confidence"| DEMOTE["Demote heavily"]
-    ACTION -->|"Suspicious links only"| IGNORE["✅ Ignore the bad links,<br/>keep the page<br/>— PREFERRED response"]
+    ACTION -->|"Suspicious links only"| IGNORE["✅ Ignore the bad links,<br/>keep the page<br/>PREFERRED response"]
     ACTION -->|"Uncertain"| REVIEW["Human review queue"]
 
     IGNORE --> WHY["Why ignoring beats penalising:<br/>if inbound links could HURT a site,<br/>anyone could destroy a competitor<br/>by pointing toxic links at them.<br/><br/>Neutralising bad links is<br/>attack-resistant; penalising for<br/>them creates a new attack."]

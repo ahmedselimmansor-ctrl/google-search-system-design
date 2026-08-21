@@ -23,7 +23,7 @@ flowchart TB
     PR & ANC & QS --> M2
     M1 --> M2
 
-    M2 --> SHUF["SHUFFLE<br/>partition by hash(term)<br/>sort by ⟨term, docid⟩<br/>— the expensive step:<br/>10¹⁴ records across the network"]
+    M2 --> SHUF["SHUFFLE<br/>partition by hash(term)<br/>sort by ⟨term, docid⟩<br/>the expensive step:<br/>10¹⁴ records across the network"]
 
     subgraph RED["REDUCE phase"]
         R1["Group all postings for one term"]

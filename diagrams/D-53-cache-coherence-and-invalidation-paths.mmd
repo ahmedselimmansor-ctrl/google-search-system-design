@@ -1,7 +1,7 @@
 flowchart TB
     subgraph TRIGGERS["What invalidates a cached SERP"]
         E1["New index version published"]
-        E2["Document removed — legal or policy"]
+        E2["Document removed: legal or policy"]
         E3["Breaking news detected for a topic"]
         E4["Ranking model rolled out"]
         E5["Natural TTL expiry"]
@@ -15,7 +15,7 @@ flowchart TB
     E5 --> S4{"Strategy"}
     E6 --> S2
 
-    S1 --> V["🏷️ Version-tagged keys<br/>cache key includes index_version<br/>publishing a new version makes<br/>every old entry unreachable —<br/>no explicit purge needed"]
+    S1 --> V["🏷️ Version-tagged keys<br/>cache key includes index_version<br/>publishing a new version makes<br/>every old entry unreachable:<br/>no explicit purge needed"]
 
     S2 --> P["📢 Active purge broadcast<br/>docid → cache tier<br/>must be FAST and RELIABLE<br/>this is the legal-compliance path"]
 

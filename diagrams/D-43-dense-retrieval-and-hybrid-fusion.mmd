@@ -1,5 +1,5 @@
 flowchart TB
-    subgraph OFFLINE["Offline — at index time"]
+    subgraph OFFLINE["Offline: at index time"]
         D["Document text"] --> DE["Document encoder<br/>transformer bi-encoder"]
         DE --> DV["Dense vector<br/>768-dim, quantized to int8"]
         DV --> ANN["ANN index construction"]
@@ -7,7 +7,7 @@ flowchart TB
         ANN --> A2["IVF-PQ: coarse cluster +<br/>product quantization<br/>lower RAM, tunable recall"]
     end
 
-    subgraph ONLINE["Online — at query time"]
+    subgraph ONLINE["Online: at query time"]
         Q["Query text"] --> QE["Query encoder<br/>same embedding space"]
         QE --> QV["Query vector"]
     end
@@ -15,7 +15,7 @@ flowchart TB
     QV --> SEARCH["ANN search<br/>approximate nearest neighbours<br/>~1–5 ms for top-1000"]
     A1 & A2 --> SEARCH
 
-    subgraph HYBRID["Hybrid retrieval — both paths run"]
+    subgraph HYBRID["Hybrid retrieval: both paths run"]
         LEX["🔤 Lexical candidates<br/>BM25 / inverted index<br/>✅ exact terms, names, numbers, codes<br/>✅ interpretable, cheap<br/>❌ vocabulary mismatch"]
         SEM["🧠 Semantic candidates<br/>dense vector search<br/>✅ synonyms, paraphrase, cross-lingual<br/>❌ weak on rare exact strings<br/>❌ opaque, expensive to update"]
     end

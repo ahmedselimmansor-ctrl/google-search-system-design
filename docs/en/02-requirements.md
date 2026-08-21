@@ -14,7 +14,7 @@
 
 Scoping is the first real design decision. A search engine can absorb infinite requirements; the ones you *refuse* determine whether the architecture is coherent.
 
-> **Diagram D-08 — Requirements decomposition**
+> **Diagram D-08 · Requirements decomposition**
 
 ```mermaid
 mindmap
@@ -76,7 +76,7 @@ mindmap
 | Generative / conversational answers | Layers *on top of* retrieval; does not change the retrieval architecture |
 | User accounts, sync, history UI | Product surface, not search infrastructure |
 
-Excluding these is not laziness — it keeps the design's *centre of gravity* on retrieval, which is where all the genuinely hard scale problems live.
+Excluding these is not laziness: it keeps the design's *centre of gravity* on retrieval, which is where all the genuinely hard scale problems live.
 
 ---
 
@@ -98,7 +98,7 @@ Excluding these is not laziness — it keeps the design's *centre of gravity* on
 
 ---
 
-## 2.3 Non-functional requirements — the ones that shape the architecture
+## 2.3 Non-functional requirements: the ones that shape the architecture
 
 ### Latency
 
@@ -108,12 +108,12 @@ Latency is not one number; it is a distribution, and the tail is what you design
 |---|---:|---|
 | p50 | < 100 ms | Feels instantaneous |
 | p95 | < 200 ms | Still below perceptual threshold |
-| p99 | < 300 ms | Hard SLO — drives all fan-out design |
+| p99 | < 300 ms | Hard SLO: drives all fan-out design |
 | p99.9 | < 800 ms | Acceptable with degraded results |
 
 **Why the tail dominates.** If a query fans out to 1,000 leaf servers and each has an independent 1 % chance of being slow, the probability that *at least one* is slow is `1 − 0.99¹⁰⁰⁰ ≈ 99.996 %`. Practically every query hits a slow server. This is Dean & Barroso's *tail at scale* result, and it is why the serving design in [Chapter 07](07-serving.md) contains hedged requests, tied requests and shard-level timeouts.
 
-> **Diagram D-09 — Latency budget allocation (p99 = 300 ms)**
+> **Diagram D-09 · Latency budget allocation (p99 = 300 ms)**
 
 ```mermaid
 pie showData
@@ -141,12 +141,12 @@ Every millisecond spent in one slice is a millisecond stolen from ranking qualit
 
 **Availability here means "returned a useful SERP", not "returned HTTP 200".** A response missing 5 % of shards is still a success. A response that returns an error page is a failure. This distinction is why the whole system is built to degrade.
 
-> **Diagram D-10 — SLO hierarchy and error-budget policy**
+> **Diagram D-10 · SLO hierarchy and error-budget policy**
 
 ```mermaid
 flowchart TB
-    SLI["SLIs — what we measure<br/>latency · availability · quality"]
-    SLI --> SLO["SLOs — what we promise<br/>p99 &lt; 300 ms · 99.99% success"]
+    SLI["SLIs: what we measure<br/>latency · availability · quality"]
+    SLI --> SLO["SLOs: what we promise<br/>p99 &lt; 300 ms · 99.99% success"]
     SLO --> EB["Error budget<br/>1 − SLO, measured over 28 days"]
 
     EB --> D{"Budget<br/>remaining?"}
@@ -197,13 +197,13 @@ cost/1000q  =  (serving CPU + RAM amortised)
              + (network egress)
 ```
 
-The dominant term is **RAM**. The index must be memory-resident to hit the latency SLO, and RAM is the most expensive resource per byte in the fleet. Nearly every optimisation in [Chapter 06](06-indexing.md) — posting compression, index tiering, docid reordering — exists to reduce bytes of RAM per document.
+The dominant term is **RAM**. The index must be memory-resident to hit the latency SLO, and RAM is the most expensive resource per byte in the fleet. Nearly every optimisation in [Chapter 06](06-indexing.md) (posting compression, index tiering, docid reordering) exists to reduce bytes of RAM per document.
 
 ---
 
 ## 2.4 Where search sits among distributed systems
 
-> **Diagram D-11 — Design pressure map**
+> **Diagram D-11 · Design pressure map**
 
 ```mermaid
 quadrantChart
@@ -224,11 +224,11 @@ quadrantChart
     "Analytics warehouse": [0.20, 0.35]
 ```
 
-Search serving lives in the bottom-right: **extreme read volume, weak consistency requirement**. That single positioning grants the architecture its most valuable freedom — you may replicate the index as many times as you like, because replicas never need to agree with each other about anything. Contrast with the top-left corner, where shard assignment and legal removals sit: tiny data, but they demand consensus, so they get a completely different storage system.
+Search serving lives in the bottom-right: **extreme read volume, weak consistency requirement**. That single positioning grants the architecture its most valuable freedom: you may replicate the index as many times as you like, because replicas never need to agree with each other about anything. Contrast with the top-left corner, where shard assignment and legal removals sit: tiny data, but they demand consensus, so they get a completely different storage system.
 
 ---
 
-## 2.5 Quality metrics — how "good results" is measured
+## 2.5 Quality metrics: how "good results" is measured
 
 You cannot optimise what you do not measure, and relevance is the hardest thing in the system to measure honestly.
 
@@ -238,12 +238,12 @@ You cannot optimise what you do not measure, and relevance is the hardest thing 
 | **MRR** | Position of the first relevant result | Ignores results below the first hit |
 | **Precision@k / Recall** | Classical IR measures | Recall is unmeasurable on a web-scale corpus |
 | **CTR** | Real user behaviour, free and abundant | Heavily position-biased; clickbait scores well |
-| **Long-click rate** | Click followed by long dwell — a proxy for satisfaction | Misses queries answered on the SERP itself |
+| **Long-click rate** | Click followed by long dwell, a proxy for satisfaction | Misses queries answered on the SERP itself |
 | **Abandonment rate** | No click at all | Ambiguous: satisfied by snippet, or failed? |
 | **Query reformulation rate** | User rewrote the query | Strong negative signal, low latency to observe |
 | **Side-by-side human eval** | Direct A/B judgement by trained raters | Slow, costly, but the ground truth |
 
-**The honest picture:** behavioural metrics are cheap and biased; human ratings are expensive and unbiased. Production relevance work uses human ratings to *calibrate* and behavioural metrics to *iterate*. Any ranking change that improves CTR while degrading human ratings is treated as a regression, not a win — this is the guardrail that keeps the engine from optimising itself into clickbait. See [Chapter 13](13-observability.md).
+**The honest picture:** behavioural metrics are cheap and biased; human ratings are expensive and unbiased. Production relevance work uses human ratings to *calibrate* and behavioural metrics to *iterate*. Any ranking change that improves CTR while degrading human ratings is treated as a regression, not a win: this is the guardrail that keeps the engine from optimising itself into clickbait. See [Chapter 13](13-observability.md).
 
 ---
 

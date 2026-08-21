@@ -14,12 +14,12 @@ flowchart TB
     end
 
     subgraph STRUCTURED["Structured storage"]
-        B["Wide-column store — Bigtable-class<br/>row key → column families → versioned cells<br/>sorted by row key · range-partitioned into tablets<br/>LSM: memtable + SSTables + compaction"]
-        SP["Globally consistent DB — Spanner-class<br/>Paxos groups · synchronized clocks<br/>externally consistent transactions"]
+        B["Wide-column store · Bigtable-class<br/>row key → column families → versioned cells<br/>sorted by row key · range-partitioned into tablets<br/>LSM: memtable + SSTables + compaction"]
+        SP["Globally consistent DB: Spanner-class<br/>Paxos groups · synchronized clocks<br/>externally consistent transactions"]
     end
 
     subgraph COORD["Coordination"]
-        CH["Lock service — Chubby-class<br/>Paxos-replicated<br/>leader election · config · naming<br/>small files, high read volume"]
+        CH["Lock service: Chubby-class<br/>Paxos-replicated<br/>leader election · config · naming<br/>small files, high read volume"]
     end
 
     subgraph FS["Distributed file system"]
@@ -29,7 +29,7 @@ flowchart TB
     subgraph HW["Physical"]
         H1["Commodity servers with local disks"]
         H2["Clos datacenter fabric"]
-        H3["Cluster scheduler — Borg-class"]
+        H3["Cluster scheduler: Borg-class"]
     end
 
     A1 & A2 --> B

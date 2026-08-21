@@ -12,11 +12,11 @@
 
 ## 7.1 The serving topology
 
-Document partitioning ([Chapter 06](06-indexing.md)) means every query must reach every shard. With thousands of shards, a single root talking directly to all of them would need thousands of outbound RPCs per query — the root becomes a fan-out bottleneck and its own tail-latency amplifier.
+Document partitioning ([Chapter 06](06-indexing.md)) means every query must reach every shard. With thousands of shards, a single root talking directly to all of them would need thousands of outbound RPCs per query: the root becomes a fan-out bottleneck and its own tail-latency amplifier.
 
 The answer is a **tree**.
 
-> **Diagram D-33 — Root, intermediate and leaf serving tree**
+> **Diagram D-33 · Root, intermediate and leaf serving tree**
 
 ```mermaid
 flowchart TB
@@ -79,7 +79,7 @@ The tree costs one extra network hop (~0.5 ms out of a 300 ms budget) and buys a
 
 Before any index is touched, the raw string must become a structured query. This stage is cheap in milliseconds and enormously expensive in relevance if done badly.
 
-> **Diagram D-34 — Query understanding pipeline**
+> **Diagram D-34 · Query understanding pipeline**
 
 ```mermaid
 flowchart TB
@@ -89,7 +89,7 @@ flowchart TB
     SAN --> LANGD["Language & script detection<br/>+ user locale signals"]
     LANGD --> NORMZ["Language-specific normalization<br/>see Chapter 05"]
 
-    NORMZ --> TOKQ["Tokenize<br/>same analyzer as index — critical!"]
+    NORMZ --> TOKQ["Tokenize<br/>same analyzer as index: critical!"]
 
     TOKQ --> PARSE["Operator parsing<br/>quotes · site: · filetype: · -term · OR"]
 
@@ -131,7 +131,7 @@ flowchart TB
 
 > **The query analyzer and the index analyzer must be the same code.**
 
-If the index lowercased and stemmed but the query path did not, `Running` will never match the indexed token `run`. This class of bug is silent — no error is thrown, results are merely and permanently worse. Every mature search system shares one analyzer implementation between build and serve, and treats any divergence as a build-breaking error.
+If the index lowercased and stemmed but the query path did not, `Running` will never match the indexed token `run`. This class of bug is silent: no error is thrown, results are merely and permanently worse. Every mature search system shares one analyzer implementation between build and serve, and treats any divergence as a build-breaking error.
 
 ### Intent shapes everything downstream
 
@@ -149,7 +149,7 @@ A ranking function tuned for informational queries will do badly on navigational
 
 ## 7.3 The full serving sequence, with tail-latency defences
 
-> **Diagram D-35 — Serving path including hedging and degradation**
+> **Diagram D-35 · Serving path including hedging and degradation**
 
 ```mermaid
 sequenceDiagram
@@ -227,19 +227,19 @@ From [Chapter 02](02-requirements.md): with 1,600 leaves and a 1 % chance each i
 |---|---|---|
 | **Hedged requests** | After waiting for the p95 latency, send a duplicate to another replica; use whichever returns first | ~5 % extra load |
 | **Tied requests** | Send to two replicas immediately; each cancels the other's queued copy when it starts executing | Slightly more messaging, near-zero wasted work |
-| **Deadline propagation** | Every hop passes down its remaining budget; a leaf that cannot finish in time returns partial results rather than blowing the budget | Free — just plumbing |
+| **Deadline propagation** | Every hop passes down its remaining budget; a leaf that cannot finish in time returns partial results rather than blowing the budget | Free: just plumbing |
 
-Plus the architectural defence: **coverage degradation**. If a shard does not answer, the query proceeds without it and the response is annotated with the coverage fraction. Serving 99.5 % of the corpus in 200 ms is a far better product than serving 100 % in 3 seconds — and the alternative, returning an error, is the worst outcome of all.
+Plus the architectural defence: **coverage degradation**. If a shard does not answer, the query proceeds without it and the response is annotated with the coverage fraction. Serving 99.5 % of the corpus in 200 ms is a far better product than serving 100 % in 3 seconds, and the alternative, returning an error, is the worst outcome of all.
 
 ---
 
 ## 7.4 Where the milliseconds go
 
-> **Diagram D-36 — Latency budget timeline (cache miss, p99 path)**
+> **Diagram D-36 · Latency budget timeline (cache miss, p99 path)**
 
 ```mermaid
 gantt
-    title Query latency budget — cache miss (units: milliseconds)
+    title Query latency budget · cache miss (units: milliseconds)
     dateFormat X
     axisFormat %s
 
@@ -274,15 +274,15 @@ gantt
 Read this as a budget you are *spending*. Two structural facts fall out of it:
 
 1. **Retrieval and ranking together are ~50 % of the budget** (55 ms → 185 ms). Everything else is overhead you minimise so that this half can be as good as possible.
-2. **The 50 ms of headroom at the end is not slack — it is the tail.** p50 finishes near 210 ms; p99 uses the headroom. Spending it on features means missing the SLO for 1 % of queries.
+2. **The 50 ms of headroom at the end is not slack: it is the tail.** p50 finishes near 210 ms; p99 uses the headroom. Spending it on features means missing the SLO for 1 % of queries.
 
 ---
 
-## 7.5 Universal search — blending the verticals
+## 7.5 Universal search: blending the verticals
 
 Modern SERPs are not one ranked list. They interleave web results with images, news, video, maps, shopping and direct answers. Each vertical is a separate retrieval system with its own index and ranking, and the mixer must decide *which* to show, *where*, and *how much space* each gets.
 
-> **Diagram D-37 — Vertical triggering and blending**
+> **Diagram D-37 · Vertical triggering and blending**
 
 ```mermaid
 flowchart TB
@@ -326,7 +326,7 @@ flowchart TB
     class NORM risk
 ```
 
-**The hard part is score normalisation.** A web result's score and an image result's score come from different models trained on different objectives; they are not on a common scale, so you cannot simply sort them together. The standard solution is to convert each vertical's score into a **predicted utility** — an estimate of the probability the user is satisfied by that item — calibrated on held-out human judgements. Only calibrated probabilities are comparable across verticals.
+**The hard part is score normalisation.** A web result's score and an image result's score come from different models trained on different objectives; they are not on a common scale, so you cannot simply sort them together. The standard solution is to convert each vertical's score into a **predicted utility** (an estimate of the probability the user is satisfied by that item) calibrated on held-out human judgements. Only calibrated probabilities are comparable across verticals.
 
 **Triggering too eagerly is the classic failure.** Showing a news carousel for a query with no news intent pushes the actually-relevant web result below the fold. Vertical triggers are therefore tuned conservatively: the bar for *adding* a vertical is higher than the bar for a web result to keep its slot.
 
@@ -336,13 +336,13 @@ flowchart TB
 
 The snippet is what the user actually reads. It is generated per query, not stored, because the useful passage depends on what was asked.
 
-> **Diagram D-38 — Query-biased snippet generation**
+> **Diagram D-38 · Query-biased snippet generation**
 
 ```mermaid
 flowchart TB
     IN["Top-10 docids + query terms"]
 
-    IN --> FETCH["Fetch document text<br/>from forward index<br/>⚠️ 10 parallel reads —<br/>this is the doc-store hot path"]
+    IN --> FETCH["Fetch document text<br/>from forward index<br/>⚠️ 10 parallel reads:<br/>this is the doc-store hot path"]
 
     FETCH --> SPLIT["Split into candidate passages<br/>sentences or sliding windows"]
 
@@ -376,7 +376,7 @@ flowchart TB
 Two notes that matter more than they look:
 
 - **Snippet generation is a document-store read amplifier.** Every uncached query performs ~10 random reads against a petabyte-scale store, in the latency-critical path. This is why the forward index is co-located with the leaf serving tier where possible, and why snippet caching is a separate cache layer in [Chapter 10](10-caching.md).
-- **Bidi control characters must be stripped.** In a bilingual context this is not cosmetic: Unicode direction-override characters can make displayed text read differently from its actual content — a genuine SERP-spoofing vector. Sanitising them is a security control, not a formatting nicety.
+- **Bidi control characters must be stripped.** In a bilingual context this is not cosmetic: Unicode direction-override characters can make displayed text read differently from its actual content; a genuine SERP-spoofing vector. Sanitising them is a security control, not a formatting nicety.
 
 ---
 
@@ -417,7 +417,7 @@ function leafSearch(query, k, deadline):
 Three properties of this loop define the system's character:
 
 1. **It is deadline-aware.** The loop checks the clock and returns what it has. A leaf never blows the budget; it returns a partial answer flagged as such.
-2. **L1 scoring is deliberately cheap.** BM25-style term scoring plus precomputed static signals — no model inference, no document fetch. Expensive scoring happens later, on far fewer documents.
+2. **L1 scoring is deliberately cheap.** BM25-style term scoring plus precomputed static signals: no model inference, no document fetch. Expensive scoring happens later, on far fewer documents.
 3. **Pruning is exact.** BlockMax-WAND skips work without changing the top-k. The cheap path and the correct path are the same path.
 
 ---

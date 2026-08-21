@@ -1,5 +1,5 @@
 flowchart TB
-    subgraph DOCP["✅ Document partitioning — the standard choice"]
+    subgraph DOCP["✅ Document partitioning: the standard choice"]
         direction TB
         DP["Each shard holds ALL terms<br/>for a SUBSET of documents"]
         DPS1[("Shard 1<br/>docs 0–10⁸<br/>full lexicon")]
@@ -10,7 +10,7 @@ flowchart TB
         DPS1 & DPS2 & DPS3 --> DPQ
     end
 
-    subgraph TERMP["⚠️ Term partitioning — rarely used at web scale"]
+    subgraph TERMP["⚠️ Term partitioning: rarely used at web scale"]
         direction TB
         TP["Each shard holds a SUBSET of terms<br/>for ALL documents"]
         TPS1[("Shard A<br/>terms a–f<br/>all 10¹¹ docs")]

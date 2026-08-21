@@ -24,12 +24,12 @@ flowchart TB
 
     CTX --> HIST["👤 Consented history"]
     HIST --> H1["Session context:<br/>previous query disambiguates<br/>'jaguar' after 'zoo tickets'"]
-    HIST --> H2["Long-term interests<br/>— small weight, opt-out honoured"]
+    HIST --> H2["Long-term interests<br/>small weight, opt-out honoured"]
 
     L1 & L2 & L3 & LG1 & LG2 & LG3 & T1 & T2 & T3 & D1 & D2 & H1 & H2 --> ADJ["Adjusted ranking"]
 
     ADJ --> GUARD["Guardrails"]
-    GUARD --> G1["Cap personalization influence<br/>— it is a tiebreaker, not a re-ranker"]
+    GUARD --> G1["Cap personalization influence<br/>it is a tiebreaker, not a re-ranker"]
     GUARD --> G2["Preserve diversity<br/>avoid filter bubbles"]
     GUARD --> G3["Never personalize away<br/>authoritative results on<br/>health, safety, civic topics"]
     GUARD --> G4["Full opt-out must be honoured<br/>and must actually work"]

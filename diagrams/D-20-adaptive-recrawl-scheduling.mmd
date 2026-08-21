@@ -13,7 +13,7 @@ flowchart TB
 
     ADJ --> BUDGET{"Fits daily<br/>crawl budget?"}
     BUDGET -->|"Yes"| SCHED["Schedule fetch"]
-    BUDGET -->|"No"| DEFER["Defer — lowest value first"]
+    BUDGET -->|"No"| DEFER["Defer: lowest value first"]
 
     SCHED --> RESULT{"Did content change?"}
     RESULT -->|"Changed"| UP["λ ← increase<br/>crawl sooner next time"]

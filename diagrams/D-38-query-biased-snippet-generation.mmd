@@ -1,7 +1,7 @@
 flowchart TB
     IN["Top-10 docids + query terms"]
 
-    IN --> FETCH["Fetch document text<br/>from forward index<br/>⚠️ 10 parallel reads —<br/>this is the doc-store hot path"]
+    IN --> FETCH["Fetch document text<br/>from forward index<br/>⚠️ 10 parallel reads:<br/>this is the doc-store hot path"]
 
     FETCH --> SPLIT["Split into candidate passages<br/>sentences or sliding windows"]
 

@@ -43,11 +43,11 @@ A system design is defined less by what it does than by what it *refused* to do.
 
 CAP is often applied to a system as a whole, which is a category error. **CAP applies per data flow**, and this system deliberately makes different choices in different places.
 
-> **Diagram D-72 — CAP positioning by subsystem**
+> **Diagram D-72 · CAP positioning by subsystem**
 
 ```mermaid
 flowchart TB
-    subgraph AP["🟢 AP — Available under partition, eventually consistent"]
+    subgraph AP["🟢 AP: Available under partition, eventually consistent"]
         AP1["Index serving<br/>a partitioned replica keeps answering<br/>from possibly-stale data"]
         AP2["Result caches<br/>staleness is bounded and intentional"]
         AP3["Crawl database<br/>a delayed page update harms nobody"]
@@ -55,7 +55,7 @@ flowchart TB
         AP5["Document store<br/>eventual replication is fine"]
     end
 
-    subgraph CP["🔴 CP — Consistent, unavailable under partition"]
+    subgraph CP["🔴 CP: Consistent, unavailable under partition"]
         CP1["Shard → server assignment<br/>two owners = corruption"]
         CP2["Live index version pointer<br/>mixed versions = incoherent results"]
         CP3["Legal removals<br/>must be correct everywhere"]
@@ -63,7 +63,7 @@ flowchart TB
         CP5["Leader election<br/>split brain is unacceptable"]
     end
 
-    NOTE["The split is not a compromise —<br/>it is the design.<br/><br/>PB of data are AP because users<br/>cannot perceive the difference.<br/>KB of metadata are CP because<br/>correctness is not negotiable.<br/><br/>Choosing one regime for the whole<br/>system would either make it<br/>unscalable (all CP) or incorrect (all AP)."]
+    NOTE["The split is not a compromise:<br/>it is the design.<br/><br/>PB of data are AP because users<br/>cannot perceive the difference.<br/>KB of metadata are CP because<br/>correctness is not negotiable.<br/><br/>Choosing one regime for the whole<br/>system would either make it<br/>unscalable (all CP) or incorrect (all AP)."]
 
     AP --> NOTE
     CP --> NOTE
@@ -82,49 +82,49 @@ flowchart TB
 
 Being able to say *why* an alternative fails is more valuable than knowing the chosen answer.
 
-> **Diagram D-73 — Rejected architectures and their failure points**
+> **Diagram D-73 · Rejected architectures and their failure points**
 
 ```mermaid
 flowchart TB
-    subgraph ALT1["❌ Alternative A — Relational database"]
+    subgraph ALT1["❌ Alternative A: Relational database"]
         A1["Store pages in a RDBMS,<br/>use full-text search extensions"]
         A2["Fails at: 10¹¹ rows, PB-scale text,<br/>10⁹ writes/day, and full-text<br/>extensions are not designed<br/>for web-scale ranking"]
-        A3["Would work for: 10⁶–10⁷ documents<br/>— an enterprise or site search"]
+        A3["Would work for: 10⁶–10⁷ documents<br/>an enterprise or site search"]
         A1 --> A2 --> A3
     end
 
-    subgraph ALT2["❌ Alternative B — Pure vector database"]
+    subgraph ALT2["❌ Alternative B: Pure vector database"]
         B1["Embed everything, ANN search only,<br/>no inverted index"]
-        B2["Fails at: exact identifiers, rare<br/>proper nouns, negation, and freshness<br/>— new entities are absent from the<br/>embedding model until it is retrained"]
+        B2["Fails at: exact identifiers, rare<br/>proper nouns, negation, and freshness<br/>new entities are absent from the<br/>embedding model until it is retrained"]
         B3["Would work for: semantic search over<br/>a curated, slow-changing corpus"]
         B1 --> B2 --> B3
     end
 
-    subgraph ALT3["❌ Alternative C — Term-partitioned index"]
+    subgraph ALT3["❌ Alternative C: Term-partitioned index"]
         C1["Shard by term so each query<br/>touches only a few servers"]
         C2["Fails at: Zipf distribution creates<br/>permanent hot spots, and intersecting<br/>lists across the network moves<br/>gigabytes per query"]
         C3["Would work for: never, at web scale"]
         C1 --> C2 --> C3
     end
 
-    subgraph ALT4["❌ Alternative D — Single global cluster"]
+    subgraph ALT4["❌ Alternative D: Single global cluster"]
         D1["One enormous datacenter,<br/>no geographic replication"]
-        D2["Fails at: physics —<br/>150 ms cross-continent RTT<br/>against a 300 ms p99 SLO,<br/>plus a single point of failure"]
+        D2["Fails at: physics:<br/>150 ms cross-continent RTT<br/>against a 300 ms p99 SLO,<br/>plus a single point of failure"]
         D3["Would work for: a single-region product"]
         D1 --> D2 --> D3
     end
 
-    subgraph ALT5["❌ Alternative E — Rebuild the index on every change"]
+    subgraph ALT5["❌ Alternative E: Rebuild the index on every change"]
         E1["Run the full MapReduce build<br/>whenever anything changes"]
-        E2["Fails at: 10⁵× write amplification —<br/>recomputing 10¹¹ documents to<br/>reflect 10⁶ changes"]
+        E2["Fails at: 10⁵× write amplification:<br/>recomputing 10¹¹ documents to<br/>reflect 10⁶ changes"]
         E3["Would work for: a corpus that<br/>changes in scheduled batches"]
         E1 --> E2 --> E3
     end
 
-    subgraph ALT6["❌ Alternative F — Per-user index"]
+    subgraph ALT6["❌ Alternative F: Per-user index"]
         F1["Fully personalized retrieval:<br/>every user gets their own ranking<br/>computed from scratch"]
         F2["Fails at: cache hit rate → 0,<br/>multiplying serving cost by ~2×,<br/>with severe privacy exposure"]
-        F3["Would work for: a small, high-value<br/>user base — enterprise search"]
+        F3["Would work for: a small, high-value<br/>user base · enterprise search"]
         F1 --> F2 --> F3
     end
 
@@ -136,13 +136,13 @@ flowchart TB
 
 **Notice the pattern in the "would work for" column.** Almost every rejected alternative is the *correct* design at a smaller scale. A relational database with full-text search is exactly right for 10⁶ documents. A pure vector database is exactly right for a curated semantic corpus. A single cluster is exactly right for a single-region product.
 
-This is the most transferable lesson in the whole repository: **there is no such thing as a good architecture in the abstract — only an architecture that is appropriate to a specific scale and set of constraints.** Applying web-scale patterns to a 10⁶-document corpus is over-engineering just as surely as applying a single-database design to 10¹¹ documents is under-engineering.
+This is the most transferable lesson in the whole repository: **there is no such thing as a good architecture in the abstract; only an architecture that is appropriate to a specific scale and set of constraints.** Applying web-scale patterns to a 10⁶-document corpus is over-engineering just as surely as applying a single-database design to 10¹¹ documents is under-engineering.
 
 ---
 
 ## 15.4 What would change at different scales
 
-> **Diagram D-74 — Architecture by corpus size**
+> **Diagram D-74 · Architecture by corpus size**
 
 ```mermaid
 flowchart LR
@@ -159,7 +159,7 @@ flowchart LR
     S4 --> A4["Everything in this repository:<br/>tiering, cascaded ranking,<br/>incremental indexing, cells,<br/>hedged requests, spam defence,<br/>custom storage infrastructure."]
 
     A1 --> N1["Complexity you do NOT need:<br/>sharding, tiering, cascades,<br/>cells, hedging"]
-    A4 --> N2["Complexity you cannot avoid:<br/>all of it — each piece was<br/>forced by a specific constraint"]
+    A4 --> N2["Complexity you cannot avoid:<br/>all of it · each piece was<br/>forced by a specific constraint"]
 
     classDef small fill:#bbf7d0,stroke:#15803d,color:#1c1917
     classDef mid fill:#fde68a,stroke:#b45309,color:#1c1917
@@ -177,7 +177,7 @@ Strip away search-specific detail and five principles remain, each applicable to
 
 | Principle | In this system | Elsewhere |
 |---|---|---|
-| **Exploit skew** | Tiering, caching, freshness — all spend lavishly on a tiny hot subset and cheaply on the rest | Any workload with a power-law access distribution |
+| **Exploit skew** | Tiering, caching, freshness: all spend lavishly on a tiny hot subset and cheaply on the rest | Any workload with a power-law access distribution |
 | **Cascade cheap → expensive** | L0 touches 10¹¹ docs, L3 touches 10¹ | Fraud detection, content moderation, recommendation, compilation |
 | **Immutability turns consistency into distribution** | Immutable segments make global replication, caching and rollback trivial | Event sourcing, content-addressed storage, build artifacts |
 | **Degrade, never fail** | Six explicit degradation levels rather than up/down | Any user-facing system where a worse answer beats no answer |
@@ -185,7 +185,7 @@ Strip away search-specific detail and five principles remain, each applicable to
 
 And one meta-principle that the whole repository demonstrates:
 
-> **Every architectural decision should be traceable to a specific constraint.** If you cannot name the constraint that forces a piece of complexity, that complexity is probably not earning its keep. Conversely, complexity that *is* forced by a real constraint is not over-engineering — it is the minimum viable design.
+> **Every architectural decision should be traceable to a specific constraint.** If you cannot name the constraint that forces a piece of complexity, that complexity is probably not earning its keep. Conversely, complexity that *is* forced by a real constraint is not over-engineering: it is the minimum viable design.
 
 ---
 

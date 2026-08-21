@@ -12,7 +12,7 @@
 
 ## About this folder
 
-Every diagram in this repository is written in [Mermaid](https://mermaid.js.org/) and renders directly on GitHub — no images, no build step, no external assets. Each one also lives here as a standalone `.mmd` file so it can be reused in slides, papers or talks.
+Every diagram in this repository is written in [Mermaid](https://mermaid.js.org/) and renders directly on GitHub: no images, no build step, no external assets. Each one also lives here as a standalone `.mmd` file so it can be reused in slides, papers or talks.
 
 Diagram IDs (`D-01` … `D-78`) are **stable**. They are safe to cite from issues, notes or other documents.
 
@@ -152,7 +152,7 @@ for f in diagrams/*.mmd; do mmdc -i "$f" -o "assets/rendered/$(basename "${f%.mm
 
 ## الفهرس الكامل بالعربية
 
-كل مخطط في هذا المستودع مكتوب بلغة [Mermaid](https://mermaid.js.org/) ويُعرض مباشرةً داخل GitHub — بلا صور ولا خطوة بناء ولا أصول خارجية. وكل مخطط موجود هنا أيضًا كملف `.mmd` مستقل ليُعاد استخدامه في العروض التقديمية أو الأوراق أو المحاضرات.
+كل مخطط في هذا المستودع مكتوب بلغة [Mermaid](https://mermaid.js.org/) ويُعرض مباشرةً داخل GitHub: بلا صور ولا خطوة بناء ولا أصول خارجية. وكل مخطط موجود هنا أيضًا كملف `.mmd` مستقل ليُعاد استخدامه في العروض التقديمية أو الأوراق أو المحاضرات.
 
 ومعرّفات المخططات (`D-01` … `D-78`) **ثابتة**، فيمكن الإشارة إليها بأمان من التذاكر أو الملاحظات أو أي وثيقة أخرى.
 

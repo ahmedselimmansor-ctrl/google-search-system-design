@@ -14,11 +14,11 @@
 
 Everything in [Chapter 01](01-overview.md) reduced to a single idea: **do not scan documents, scan a term-keyed structure**. That structure is the inverted index, and it is the reason a query over 10¹¹ documents can finish in 40 milliseconds.
 
-> **Diagram D-26 — Anatomy of the inverted index**
+> **Diagram D-26 · Anatomy of the inverted index**
 
 ```mermaid
 flowchart LR
-    subgraph FWD["Forward view — what we crawled"]
+    subgraph FWD["Forward view: what we crawled"]
         D1["doc 17<br/>'the quick brown fox'"]
         D2["doc 42<br/>'quick brown dogs run'"]
         D3["doc 99<br/>'the fox and the hound'"]
@@ -26,7 +26,7 @@ flowchart LR
 
     FWD -->|"INVERT"| INV
 
-    subgraph INV["Inverted view — what we query"]
+    subgraph INV["Inverted view: what we query"]
         direction TB
         L["📖 Lexicon / term dictionary<br/>term → df, pointer, stats"]
 
@@ -59,7 +59,7 @@ flowchart LR
 | **Postings** | For each term, the sorted list of documents containing it, with frequencies and positions | ~225 TB |
 | **Forward index / attachments** | Per-document data needed *after* retrieval: text for snippets, precomputed features, vectors | ~350 TB |
 
-The lexicon is small enough to keep entirely in RAM on every leaf server. The postings are the bulk. The forward index is only consulted for the few documents that survive ranking — which is why it can live on slower storage.
+The lexicon is small enough to keep entirely in RAM on every leaf server. The postings are the bulk. The forward index is only consulted for the few documents that survive ranking, which is why it can live on slower storage.
 
 ### What a posting actually contains
 
@@ -76,11 +76,11 @@ The `field_mask` is disproportionately valuable: it lets the scorer know *where*
 
 ---
 
-## 6.2 Compression — where the money is
+## 6.2 Compression: where the money is
 
 [Chapter 03](03-capacity-estimation.md) established that RAM is the dominant cost in the system. Index compression is therefore not an optimisation; it is the economics of the product. Every 10 % reduction in index size is roughly a 10 % reduction in the serving fleet.
 
-> **Diagram D-27 — Posting list compression pipeline**
+> **Diagram D-27 · Posting list compression pipeline**
 
 ```mermaid
 flowchart TB
@@ -105,7 +105,7 @@ flowchart TB
         E1["Docid reordering:<br/>assign nearby ids to similar docs<br/>→ smaller gaps → 10-20% further gain"]
         E2["Frequency capping:<br/>tf above ~255 adds no ranking value"]
         E3["Position pruning:<br/>drop positions in tier 2,<br/>lose phrase queries, save 60%"]
-        E4["Stopword handling:<br/>keep but store cheaply —<br/>deleting breaks phrase search"]
+        E4["Stopword handling:<br/>keep but store cheaply:<br/>deleting breaks phrase search"]
     end
 
     OUT --> EXTRA
@@ -118,9 +118,9 @@ flowchart TB
     class OUT win
 ```
 
-**On stopwords.** The classic textbook advice is to delete `the`, `a`, `of` from the index because they appear in nearly every document. Modern web search does *not* do this, because it breaks phrase and quoted queries — `"to be or not to be"` becomes unanswerable. Instead the high-frequency terms are kept but stored in cheaper structures, and query processing simply avoids leading with them.
+**On stopwords.** The classic textbook advice is to delete `the`, `a`, `of` from the index because they appear in nearly every document. Modern web search does *not* do this, because it breaks phrase and quoted queries: `"to be or not to be"` becomes unanswerable. Instead the high-frequency terms are kept but stored in cheaper structures, and query processing simply avoids leading with them.
 
-**Docid reordering** deserves emphasis because it is nearly free. If document IDs are assigned so that similar documents (same host, same topic, near-duplicate cluster) receive numerically adjacent IDs, then the gaps within each posting list become smaller, and smaller gaps compress better. Sorting documents by URL before assigning IDs — so all pages of one site are contiguous — typically yields a further 10–20 % size reduction for essentially zero engineering cost.
+**Docid reordering** deserves emphasis because it is nearly free. If document IDs are assigned so that similar documents (same host, same topic, near-duplicate cluster) receive numerically adjacent IDs, then the gaps within each posting list become smaller, and smaller gaps compress better. Sorting documents by URL before assigning IDs (so all pages of one site are contiguous) typically yields a further 10–20 % size reduction for essentially zero engineering cost.
 
 ---
 
@@ -128,11 +128,11 @@ flowchart TB
 
 An index of 600 TB cannot live on one machine. How you split it determines everything about the query path.
 
-> **Diagram D-28 — Document partitioning vs term partitioning**
+> **Diagram D-28 · Document partitioning vs term partitioning**
 
 ```mermaid
 flowchart TB
-    subgraph DOCP["✅ Document partitioning — the standard choice"]
+    subgraph DOCP["✅ Document partitioning: the standard choice"]
         direction TB
         DP["Each shard holds ALL terms<br/>for a SUBSET of documents"]
         DPS1[("Shard 1<br/>docs 0–10⁸<br/>full lexicon")]
@@ -143,7 +143,7 @@ flowchart TB
         DPS1 & DPS2 & DPS3 --> DPQ
     end
 
-    subgraph TERMP["⚠️ Term partitioning — rarely used at web scale"]
+    subgraph TERMP["⚠️ Term partitioning: rarely used at web scale"]
         direction TB
         TP["Each shard holds a SUBSET of terms<br/>for ALL documents"]
         TPS1[("Shard A<br/>terms a–f<br/>all 10¹¹ docs")]
@@ -163,28 +163,28 @@ flowchart TB
 | Property | Document partitioning | Term partitioning |
 |---|---|---|
 | Servers contacted per query | **All** (high fan-out) | Only those owning query terms (low fan-out) |
-| Network volume per query | Small — top-K results only | **Huge** — full posting lists must be shipped to intersect |
-| Load balance | Even — every shard does similar work | **Terrible** — "the" shard is melted, "xylophone" shard idles |
-| Adding documents | Trivial — write to any shard, or add a shard | Requires touching many shards |
-| Failure of one shard | Lose a slice of the corpus, results degrade gracefully | Lose entire terms — some queries become unanswerable |
+| Network volume per query | Small: top-K results only | **Huge**: full posting lists must be shipped to intersect |
+| Load balance | Even: every shard does similar work | **Terrible**: "the" shard is melted, "xylophone" shard idles |
+| Adding documents | Trivial: write to any shard, or add a shard | Requires touching many shards |
+| Failure of one shard | Lose a slice of the corpus, results degrade gracefully | Lose entire terms: some queries become unanswerable |
 | Ranking quality | Global stats (IDF) need a small side-channel | Global stats are local and exact |
-| Scoring locality | **Excellent** — all data for a doc is co-located | Poor — a document's terms are spread across shards |
+| Scoring locality | **Excellent**: all data for a doc is co-located | Poor: a document's terms are spread across shards |
 
 **Document partitioning wins decisively**, and the deciding factor is the third row. Term frequencies on the web follow a Zipf distribution, so a term-partitioned index has a permanent, unfixable hot-spotting problem. Document partitioning gives every shard statistically identical work.
 
-The cost you accept is total fan-out: every query touches every shard, which creates the tail-latency problem that [Chapter 07](07-serving.md) and [Chapter 12](12-reliability.md) spend their entire budgets mitigating. That is a good trade — tail latency is *manageable* with hedging and timeouts, whereas Zipf hot-spotting is not manageable at all.
+The cost you accept is total fan-out: every query touches every shard, which creates the tail-latency problem that [Chapter 07](07-serving.md) and [Chapter 12](12-reliability.md) spend their entire budgets mitigating. That is a good trade: tail latency is *manageable* with hedging and timeouts, whereas Zipf hot-spotting is not manageable at all.
 
 ### One global statistic must be shared
 
 Document partitioning has one genuine flaw: **IDF (inverse document frequency) is a global quantity**, but each shard only sees its own documents. If shards computed IDF locally, the same term would be scored differently on different shards and the merged ranking would be incoherent.
 
-The fix is cheap: periodically compute global `df` for every term in a batch job and broadcast a compact table (~40 GB — the lexicon) to every leaf. IDF changes slowly, so an hourly or daily refresh is more than adequate.
+The fix is cheap: periodically compute global `df` for every term in a batch job and broadcast a compact table (~40 GB; the lexicon) to every leaf. IDF changes slowly, so an hourly or daily refresh is more than adequate.
 
 ---
 
 ## 6.4 Building the index
 
-> **Diagram D-29 — Index construction pipeline**
+> **Diagram D-29 · Index construction pipeline**
 
 ```mermaid
 flowchart TB
@@ -212,7 +212,7 @@ flowchart TB
     PR & ANC & QS --> M2
     M1 --> M2
 
-    M2 --> SHUF["SHUFFLE<br/>partition by hash(term)<br/>sort by ⟨term, docid⟩<br/>— the expensive step:<br/>10¹⁴ records across the network"]
+    M2 --> SHUF["SHUFFLE<br/>partition by hash(term)<br/>sort by ⟨term, docid⟩<br/>the expensive step:<br/>10¹⁴ records across the network"]
 
     subgraph RED["REDUCE phase"]
         R1["Group all postings for one term"]
@@ -248,7 +248,7 @@ flowchart TB
 
 **The shuffle is the whole cost of index building.** Map and reduce are embarrassingly parallel and cheap. Moving 10¹⁴ ⟨term, docid⟩ records across the network so that all postings for one term land on one reducer is what takes the hours. This is precisely the workload MapReduce was designed for, and it is not a coincidence that the paper came out of a search company.
 
-**The validation gate is not optional.** Publishing a broken index to the serving tier is one of the few genuinely catastrophic failure modes in the system — it degrades results globally, and the corpus is too large to inspect by hand. A fixed suite of golden queries with known-good results runs against every candidate index, and any regression halts the publish while the previous version keeps serving.
+**The validation gate is not optional.** Publishing a broken index to the serving tier is one of the few genuinely catastrophic failure modes in the system: it degrades results globally, and the corpus is too large to inspect by hand. A fixed suite of golden queries with known-good results runs against every candidate index, and any regression halts the publish while the previous version keeps serving.
 
 ---
 
@@ -256,14 +256,14 @@ flowchart TB
 
 Index segments are **immutable once written**. Updates never modify a segment; they create new ones. This is the log-structured merge (LSM) discipline, and it buys several properties at once:
 
-- Readers need no locks — a segment being read can never change underneath them.
+- Readers need no locks: a segment being read can never change underneath them.
 - Writes are sequential appends, which is the only access pattern that is fast on every storage medium.
 - Replication is trivial: an immutable file can be copied anywhere and cached forever.
 - Rollback is trivial: keep the previous segment set and switch a pointer.
 
-The cost is **read amplification** — a query must consult every live segment — and this is what merging repays.
+The cost is **read amplification** (a query must consult every live segment), and this is what merging repays.
 
-> **Diagram D-30 — Segment lifecycle and tiered merging**
+> **Diagram D-30 · Segment lifecycle and tiered merging**
 
 ```mermaid
 stateDiagram-v2
@@ -272,7 +272,7 @@ stateDiagram-v2
     InMemory --> Flushed: buffer full or timer fires
     note right of InMemory
         Small in-RAM segment.
-        Searchable immediately —
+        Searchable immediately
         this is what makes
         near-real-time possible.
     end note
@@ -304,7 +304,7 @@ stateDiagram-v2
     end note
 ```
 
-**Deletions are tombstones, not edits.** Removing a document writes a marker into a delete list; the document keeps occupying index space until the next major merge physically drops it. Queries filter tombstoned docids at read time. This is the only way to handle deletion in an immutable structure, and it means "delete" has a latency of *seconds* (filtered from results) but "reclaim the space" has a latency of *hours* (next merge). For legal removals, the first latency is what matters — and it is satisfied.
+**Deletions are tombstones, not edits.** Removing a document writes a marker into a delete list; the document keeps occupying index space until the next major merge physically drops it. Queries filter tombstoned docids at read time. This is the only way to handle deletion in an immutable structure, and it means "delete" has a latency of *seconds* (filtered from results) but "reclaim the space" has a latency of *hours* (next merge). For legal removals, the first latency is what matters, and it is satisfied.
 
 ---
 
@@ -312,13 +312,13 @@ stateDiagram-v2
 
 [Chapter 03](03-capacity-estimation.md) showed tiering is worth roughly two orders of magnitude of fleet cost. Here is the mechanism.
 
-> **Diagram D-31 — Tiered index and fallthrough**
+> **Diagram D-31 · Tiered index and fallthrough**
 
 ```mermaid
 flowchart TB
     Q["Incoming query"] --> T0
 
-    subgraph T0["🔥 Tier 0 — hot"]
+    subgraph T0["🔥 Tier 0: hot"]
         T0D["10⁹ docs · 1% of corpus<br/>~6 TB · RAM-resident<br/>600 replicas<br/>full positions, all signals"]
     end
 
@@ -326,7 +326,7 @@ flowchart TB
     C0 -->|"Yes ~85%"| DONE0["✅ Serve from Tier 0<br/>latency ~40 ms"]
     C0 -->|"No"| T1
 
-    subgraph T1["⚡ Tier 1 — warm"]
+    subgraph T1["⚡ Tier 1: warm"]
         T1D["10¹⁰ docs · 10% of corpus<br/>~60 TB · RAM + NVMe<br/>90 replicas<br/>full positions"]
     end
 
@@ -334,14 +334,14 @@ flowchart TB
     C1 -->|"Yes ~12%"| DONE1["✅ Serve from T0 + T1<br/>latency ~80 ms"]
     C1 -->|"No"| T2
 
-    subgraph T2["🧊 Tier 2 — cold"]
+    subgraph T2["🧊 Tier 2: cold"]
         T2D["8.9 × 10¹⁰ docs · 89%<br/>~534 TB · NVMe<br/>36 replicas<br/>positions pruned to save space"]
     end
 
     T2 --> DONE2["✅ Serve from all tiers<br/>latency ~200 ms<br/>rare, long-tail queries"]
 
     subgraph ASSIGN["What decides a document's tier"]
-        A1["Query coverage — does it ever get retrieved?"]
+        A1["Query coverage: does it ever get retrieved?"]
         A2["PageRank / authority"]
         A3["Click-through history"]
         A4["Freshness and change rate"]
@@ -363,13 +363,13 @@ flowchart TB
     class DONE0,DONE1,DONE2 ok
 ```
 
-**Tiering is a bet, and the bet has a cost.** The fallthrough condition (`count ≥ K and min score ≥ θ`) is a heuristic. When it fires incorrectly, the system serves a Tier-0-only result set for a query whose best answer was in Tier 2 — a silent relevance failure that no latency metric will reveal. Tuning θ is a direct trade of cost against quality on rare queries, and it must be monitored with the human-rated quality metrics from [Chapter 02](02-requirements.md), never with latency or CTR alone.
+**Tiering is a bet, and the bet has a cost.** The fallthrough condition (`count ≥ K and min score ≥ θ`) is a heuristic. When it fires incorrectly, the system serves a Tier-0-only result set for a query whose best answer was in Tier 2: a silent relevance failure that no latency metric will reveal. Tuning θ is a direct trade of cost against quality on rare queries, and it must be monitored with the human-rated quality metrics from [Chapter 02](02-requirements.md), never with latency or CTR alone.
 
 ---
 
 ## 6.7 The complete index data model
 
-> **Diagram D-32 — Index structures**
+> **Diagram D-32 · Index structures**
 
 ```mermaid
 classDiagram
@@ -476,7 +476,7 @@ classDiagram
 
 ## 6.8 Query-time index traversal
 
-Knowing the structure, here is how a leaf server actually uses it — and the optimisation that makes it fast.
+Knowing the structure, here is how a leaf server actually uses it, and the optimisation that makes it fast.
 
 **Naïve intersection** of two posting lists walks both fully: O(len(A) + len(B)). For a term like "the" that is 10¹⁰ postings. Unacceptable.
 
@@ -495,7 +495,7 @@ for each candidate block:
         decode block, score documents, update θ
 ```
 
-In practice this skips **80–95 %** of postings for a typical multi-term query, and it is exact — the top-k returned is identical to the result of full evaluation. It is a rare case of a large speedup with no quality cost, which is why block max-scores are stored at build time (see Diagram D-27, step ⑤).
+In practice this skips **80–95 %** of postings for a typical multi-term query, and it is exact: the top-k returned is identical to the result of full evaluation. It is a rare case of a large speedup with no quality cost, which is why block max-scores are stored at build time (see Diagram D-27, step ⑤).
 
 ---
 

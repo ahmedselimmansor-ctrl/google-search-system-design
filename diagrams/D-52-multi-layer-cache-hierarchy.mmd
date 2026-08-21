@@ -6,7 +6,7 @@ flowchart TB
 
     L2 -->|"miss"| L3["③ Result cache (SERP cache)<br/>key: normalized_query + locale +<br/>country + safesearch + device_class<br/>value: full ranked result set<br/>TTL: 5 min – 24 h by intent<br/>hit rate ~40% · THE BIG ONE"]
 
-    L3 -->|"miss"| L4["④ Query-understanding cache<br/>key: raw query string<br/>value: spelling, intent, expansion, embedding<br/>TTL: hours<br/>hit rate ~60% — cheap and very effective"]
+    L3 -->|"miss"| L4["④ Query-understanding cache<br/>key: raw query string<br/>value: spelling, intent, expansion, embedding<br/>TTL: hours<br/>hit rate ~60% · cheap and very effective"]
 
     L4 --> L5["⑤ Posting-list cache<br/>key: term id<br/>value: decompressed hot posting blocks<br/>on the leaf server, LFU<br/>hit rate ~85% for common terms"]
 
